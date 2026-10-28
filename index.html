@@ -118,6 +118,31 @@ h1,h2,h3{font-family:var(--display);font-weight:800;line-height:.95;text-wrap:ba
 .prow .sts{font-size:12px;color:var(--muted);text-align:right;white-space:nowrap;font-variant-numeric:tabular-nums}
 .list-h{font-family:var(--display);text-transform:uppercase;letter-spacing:.12em;font-size:13px;color:var(--brass);padding:12px 0 4px}
 
+/* online rooms */
+.online{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:16px;align-items:center;background:linear-gradient(120deg,#2a0d12,var(--surf) 60%);border:1px solid var(--red);border-radius:10px;padding:20px;margin-bottom:22px}
+.online h2{font-size:clamp(32px,6vw,48px)}
+.online p{margin:6px 0 0;color:#cfdcd2;max-width:56ch}
+.online ol{margin:10px 0 0;padding-left:20px;color:#cfdcd2;font-size:14px}
+.subhead{font-family:var(--display);font-weight:800;text-transform:uppercase;font-size:26px;margin:4px 0 10px}
+.roomhead{display:flex;flex-wrap:wrap;gap:12px;align-items:end;justify-content:space-between;padding-block:20px 12px}
+.roomhead h1{font-size:clamp(40px,8vw,72px);line-height:.9}
+.roomhead h1 span{color:var(--brass);font-variant-numeric:tabular-nums;letter-spacing:.04em}
+.sharebox{background:var(--surf);border:1px solid var(--line);border-radius:8px;padding:14px;display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin-bottom:14px}
+.sharebox code{flex:1;min-width:0;overflow-wrap:anywhere;background:var(--bg);border:1px solid var(--line);border-radius:4px;padding:8px 10px;font-size:14px;user-select:all;-webkit-user-select:all}
+.pstat{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px}
+.pill{display:inline-flex;align-items:center;gap:6px;font-size:13px;font-weight:600;padding:5px 10px;border-radius:999px;background:var(--surf2);border:1px solid var(--line)}
+.pill i{width:8px;height:8px;border-radius:50%;background:var(--muted)}
+.pill.ok i{background:var(--ok)}.pill.wait i{background:var(--warn)}
+.oppcard .hide{border-top:1px solid var(--line);padding:18px 4px;color:var(--muted);text-align:center}
+.oppcard .bigst{display:flex;gap:16px;align-items:baseline}
+.readybar{display:flex;flex-wrap:wrap;gap:12px;align-items:center;justify-content:space-between;background:var(--surf);border:1px solid var(--line);border-radius:8px;padding:14px;margin:14px 0}
+.startbox{background:var(--surf2);border:1px solid var(--brass);border-radius:10px;padding:18px;display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:40px}
+.startbox .opt{background:var(--surf);border:1px solid var(--line);border-radius:8px;padding:16px;display:flex;flex-direction:column;gap:10px}
+.startbox h3{font-size:30px}
+.startbox p{margin:0;color:#cfdcd2;font-size:15px}
+.countdown{font-family:var(--display);font-weight:800;font-size:22px;color:var(--brass)}
+@media (max-width:760px){.online{grid-template-columns:1fr}.startbox{grid-template-columns:1fr}}
+
 /* studio */
 .studio-top{padding-block:22px 6px}
 .vsbar{display:grid;grid-template-columns:1fr auto 1fr;gap:14px;align-items:center;margin:14px 0}
@@ -176,7 +201,7 @@ section.block h3{font-size:26px;margin-bottom:10px}
 .hud-row{display:flex;gap:8px;align-items:flex-start}
 .bug{display:flex;align-items:stretch;font-family:var(--display);font-weight:800;font-size:20px;line-height:1;background:#0b1511ee;border-radius:4px;overflow:hidden;box-shadow:0 4px 12px #0008}
 .bug > *{padding:6px 9px;display:flex;align-items:center}
-.bug .sc{font-variant-numeric:tabular-nums;min-width:56px;justify-content:center}
+.bug .sc{white-space:nowrap;font-variant-numeric:tabular-nums;min-width:56px;justify-content:center}
 .bug .clk{background:#ffffff14;min-width:50px;justify-content:center;font-variant-numeric:tabular-nums}
 .possbar{width:180px;height:4px;display:flex;border-radius:2px;overflow:hidden;background:#0008}
 .possbar i{display:block;height:100%;transition:width .4s}
@@ -246,6 +271,16 @@ section.block h3{font-size:26px;margin-bottom:10px}
     </div>
     <div class="h2h" id="h2hTop" hidden></div>
   </div>
+  <div class="online">
+    <div>
+      <div class="eyebrow">Two phones · one match</div>
+      <h2>Play a friend online</h2>
+      <p>Create a room and send the link. You each pick your own XI on your own phone, then watch the simulation together or play live, each controlling your own team.</p>
+      <ol><li>Tap Create a room</li><li>Send the link (WhatsApp, Messages…)</li><li>Both tap Ready, then choose Simulation or Live</li></ol>
+    </div>
+    <button class="cta" id="createRoom" style="font-size:24px;padding:14px 26px">Create a room</button>
+  </div>
+  <div class="subhead">Or play on one phone</div>
   <div class="modebar">
     <span class="lbl">How do you pick?</span>
     <div class="seg" id="modeSeg">
@@ -266,14 +301,31 @@ section.block h3{font-size:26px;margin-bottom:10px}
   </div>
   <div class="teams" id="teams"></div>
   <div class="go-row">
-    <div>
-      <div class="eyebrow" style="margin-bottom:6px">Match length (watch time at 1×)</div>
-      <div class="seg" id="lenSeg"></div>
-    </div>
+    <span class="muted" style="font-size:14px">Full 90 minutes, about 2 min 40 s to watch at the default 3× speed.</span>
     <div class="tact">
-      <button class="cta ghost" id="pasteMatch">Open a match code</button>
       <button class="cta" id="toStudio">To the studio</button>
     </div>
+  </div>
+</div></section>
+
+<!-- ONLINE ROOM -->
+<section id="v-room" class="view" hidden><div class="wrap">
+  <div class="roomhead">
+    <div><div class="eyebrow" id="rmWho">Online room</div><h1>Room <span id="rmCode"></span></h1></div>
+    <button class="cta ghost sm" id="rmLeave">Leave room</button>
+  </div>
+  <div class="sharebox" id="rmShare">
+    <span class="eyebrow" style="width:100%">Send this link to the other player</span>
+    <code id="rmLink"></code>
+    <button class="cta sm" id="rmShareBtn">Share link</button>
+    <button class="cta ghost sm" id="rmCopy">Copy</button>
+  </div>
+  <div class="pstat" id="rmStatus"></div>
+  <div class="teams" id="rmTeams"></div>
+  <div class="readybar" id="rmReady"></div>
+  <div class="startbox" id="rmStart" hidden>
+    <div class="opt"><span class="eyebrow">Both phones watch the same game</span><h3>Simulation</h3><p>22 legends play it out in 3D with commentary and pundits. About 2 min 40 s at 3×; either of you can speed up or pause for both.</p><button class="cta" id="rmSim">Watch the simulation</button></div>
+    <div class="opt"><span class="eyebrow">You control your own team</span><h3>Play live</h3><p>Thumbstick and buttons on your own phone. Player 1's phone hosts the match, so keep it awake.</p><div class="seg" id="rmLen"></div><button class="cta" id="rmLive">Play live</button></div>
   </div>
 </div></section>
 
@@ -362,9 +414,11 @@ section.block h3{font-size:26px;margin-bottom:10px}
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
 <script src="/data.js"></script>
 <script src="/sim.js"></script>
 <script src="/studio.js"></script>
+<script src="/live.js"></script>
 <script>
 (function(){
 'use strict';
@@ -391,19 +445,25 @@ function defaultTeams(){
 let D=store.get('lxi.h2h',null);
 if(!D||!Array.isArray(D.teams)||D.teams.length!==2)D={mode:'build',len:8,teams:defaultTeams(),draft:null};
 D.teams.forEach(t=>{if(!FORMS[t.form])t.form='4-3-3';if(!Array.isArray(t.xi)||t.xi.length!==11)t.xi=Array(11).fill(null);t.xi=t.xi.map(x=>x!=null&&PL[x]?x:null)});
-const save=()=>store.set('lxi.h2h',D);
+const save=()=>{if(CT===D)store.set('lxi.h2h',D);else roomSave()};
 let match=null; // {A,B,seed,len,res,comm}
+let CT=D; // teams being edited: local D or the online room
 
 /* ============ SETUP ============ */
-const LENS=[[5,'5 min'],[8,'8 min'],[12,'12 min']];
+const LENS=[[8,'8 min']];
 function teamName(t){return (t.name||'').trim()||((t.mgr||'Team')+' XI')}
-function abbr(t){return teamName(t).replace(/[^A-Za-z0-9]/g,'').slice(0,3).toUpperCase()||'XI'}
-function taken(id,except){return D.teams.findIndex((t,i)=>i!==except&&t.xi.includes(id))}
+function abbr0(t){return teamName(t).replace(/[^A-Za-z0-9]/g,'').slice(0,3).toUpperCase()||'XI'}
+function abbr(t){if(match&&match.A&&match.B&&abbr0(match.A)===abbr0(match.B))return t===match.B?'P2':'P1';return abbr0(t)}
+function taken(id,except){return CT.teams.findIndex((t,i)=>i!==except&&t&&t.xi.includes(id))}
 function renderSetup(){
+  if(CT!==D){renderRoom();return}
   $$('#modeSeg .chip').forEach(c=>c.classList.toggle('on',c.dataset.mode===D.mode));
   $('#modeHint').textContent=D.mode==='draft'?'Take turns: A, B, B, A, A, B… Each pick goes into your best open position.':'Each legend can only play for one side.';
-  $('#lenSeg').innerHTML=LENS.map(([n,l])=>`<button class="chip${D.len===n?' on':''}" data-len="${n}">${l}</button>`).join('');
-  $('#teams').innerHTML=D.teams.map((t,ti)=>{const k=kitOf(t.kit),st=teamStats(t.form,t.xi);const sl=FORMS[t.form];
+  $('#teams').innerHTML=CT.teams.map((t,ti)=>cardHTML(t,ti)).join('');
+  renderH2h($('#h2hTop'));
+  if(D.draft)renderDraft();else $('#draftbar').hidden=true;
+}
+function cardHTML(t,ti){const k=kitOf(t.kit),st=teamStats(t.form,t.xi);const sl=FORMS[t.form];
     const turn=D.draft&&draftTurn()===ti;
     return `<div class="tcard${turn?' turn':''}" style="--kit:${k.a}"><div class="band"></div><div class="in">
       <div class="names"><label>Manager<input id="mgr${ti}" data-mgr="${ti}" value="${esc(t.mgr)}" maxlength="18"></label><label>Team name<input id="tn${ti}" data-tn="${ti}" value="${esc(t.name)}" maxlength="22"></label></div>
@@ -415,22 +475,19 @@ function renderSetup(){
       <div class="tact">
         ${myLxi?`<button class="chip" data-act="lxi:${ti}">Load my Legends XI</button>`:''}
         <button class="chip" data-act="auto:${ti}">Auto-fill</button><button class="chip" data-act="gun:${ti}">Gunners only</button><button class="chip" data-act="clear:${ti}">Clear</button>
-        <button class="chip" data-act="copy:${ti}">Copy team code</button><button class="chip" data-act="paste:${ti}">Paste team code</button>
-      </div></div></div>`}).join('');
-  renderH2h($('#h2hTop'));
-  if(D.draft)renderDraft();else $('#draftbar').hidden=true;
-}
-function fillTeam(ti,pool){const t=D.teams[ti];const other=new Set(D.teams[1-ti].xi.filter(x=>x!=null));t.xi=autofill(t.form,t.xi,pool.filter(p=>!other.has(p.id)));save();renderSetup()}
-document.addEventListener('input',e=>{const t=e.target;if(t.dataset.mgr!=null){const tm=D.teams[+t.dataset.mgr];const old=tm.mgr;tm.mgr=t.value;if(!tm.name||tm.name===old+' XI'){tm.name=t.value+' XI';const n=$('#tn'+t.dataset.mgr);if(n)n.value=tm.name}save()}
-  if(t.dataset.tn!=null){D.teams[+t.dataset.tn].name=t.value;save()}});
+        ${CT===D?`<button class="chip" data-act="copy:${ti}">Copy team code</button><button class="chip" data-act="paste:${ti}">Paste team code</button>`:''}
+      </div></div></div>`}
+function fillTeam(ti,pool){const t=CT.teams[ti];const other=new Set(CT.teams[1-ti].xi.filter(x=>x!=null));t.xi=autofill(t.form,t.xi,pool.filter(p=>!other.has(p.id)));save();renderSetup()}
+document.addEventListener('input',e=>{const t=e.target;if(t.dataset.mgr!=null){const tm=CT.teams[+t.dataset.mgr];const old=tm.mgr;tm.mgr=t.value;if(!tm.name||tm.name===old+' XI'){tm.name=t.value+' XI';const n=$('#tn'+t.dataset.mgr);if(n)n.value=tm.name}save()}
+  if(t.dataset.tn!=null){CT.teams[+t.dataset.tn].name=t.value;save()}});
 document.addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;const ds=b.dataset;
   if(ds.mode){if(ds.mode==='draft'&&!D.draft)startDraft();else if(ds.mode==='build'&&D.draft){D.draft=null;D.mode='build';save();renderSetup()}return}
   if(ds.len){D.len=+ds.len;save();renderSetup();return}
-  if(ds.kit){const [ti,k]=ds.kit.split(':');D.teams[+ti].kit=k;save();renderSetup();return}
-  if(ds.form){const [ti,f]=ds.form.split(':');D.teams[+ti].form=f;save();renderSetup();return}
+  if(ds.kit){const [ti,k]=ds.kit.split(':');CT.teams[+ti].kit=k;save();renderSetup();return}
+  if(ds.form){const [ti,f]=ds.form.split(':');CT.teams[+ti].form=f;save();renderSetup();return}
   if(ds.slot&&b.classList.contains('xrow')){const [ti,i]=ds.slot.split(':').map(Number);if(D.draft){snack('Draft picks fill positions automatically');return}openPicker(ti,i);return}
-  if(ds.act){const [a,ti_]=ds.act.split(':');const ti=+ti_;const t=D.teams[ti];
-    if(a==='lxi'&&myLxi){const other=new Set(D.teams[1-ti].xi);t.form=myLxi.form;t.xi=myLxi.xi.map(x=>other.has(x)?null:x);save();renderSetup();if(myLxi.xi.some(x=>other.has(x)))snack('Some legends were already on the other side')}
+  if(ds.act){const [a,ti_]=ds.act.split(':');const ti=+ti_;const t=CT.teams[ti];
+    if(a==='lxi'&&myLxi){const other=new Set(CT.teams[1-ti].xi);t.form=myLxi.form;t.xi=myLxi.xi.map(x=>other.has(x)?null:x);save();renderSetup();if(myLxi.xi.some(x=>other.has(x)))snack('Some legends were already on the other side')}
     if(a==='auto')fillTeam(ti,PL);if(a==='gun')fillTeam(ti,PL.filter(p=>p.ars));
     if(a==='clear'){t.xi=Array(11).fill(null);save();renderSetup()}
     if(a==='copy')copy(teamCode(t));
@@ -444,8 +501,8 @@ document.addEventListener('click',e=>{const b=e.target.closest('button');if(!b)r
 
 /* picker */
 const pk={team:0,slot:0,filter:'all',q:'',any:false};
-function openPicker(ti,i){Object.assign(pk,{team:ti,slot:i,q:''});$('#pkQ').value='';$('#sheet').hidden=false;$('#pkRemove').hidden=D.teams[ti].xi[i]==null;renderPicker()}
-function renderPicker(){const t=D.teams[pk.team],sp=FORMS[t.form][pk.slot][0];$('#pkTitle').textContent=`${teamName(t)}: pick a ${sp}`;
+function openPicker(ti,i){Object.assign(pk,{team:ti,slot:i,q:''});$('#pkQ').value='';$('#sheet').hidden=false;$('#pkRemove').hidden=CT.teams[ti].xi[i]==null;renderPicker()}
+function renderPicker(){const t=CT.teams[pk.team],sp=FORMS[t.form][pk.slot][0];$('#pkTitle').textContent=`${teamName(t)}: pick a ${sp}`;
   const ch=[['all','All'],['ars','Gunners'],['90',"'90s"],['00',"'00s"],['10',"'10s"],['20',"'20s"],['any',pk.any?'All positions ✓':'All positions']];
   $('#pkChips').innerHTML=ch.map(([k,l])=>`<button class="chip${(k==='any'?pk.any:pk.filter===k)?' on':''}" data-pf="${k}">${l}</button>`).join('');
   const q=pk.q.trim().toLowerCase();
@@ -454,25 +511,25 @@ function renderPicker(){const t=D.teams[pk.team],sp=FORMS[t.form][pk.slot][0];$(
   const rk={nat:0,line:1,off:2};list.sort((a,b)=>rk[fit(a,sp)]-rk[fit(b,sp)]||effOvr(b,sp)-effOvr(a,sp));
   let h='',last='';for(const p of list){const f=fit(p,sp),g=f==='nat'?'Natural '+sp+'s':'Other positions';if(g!==last){h+=`<div class="list-h">${g}</div>`;last=g}
     const tk=taken(p.id,pk.team),mine=t.xi.includes(p.id);
-    h+=`<button class="prow${p.ars?' ars':''}" data-pid="${p.id}"${tk>=0?' disabled':''}><span class="ov">${effOvr(p,sp)}</span><span style="min-width:0"><span class="nm">${esc(p.name)}</span><span class="sub">${p.pos} · ${p.nat} · ${eraLabel(p)}${mine?'<span class="tag">IN XI</span>':''}${tk>=0?`<span class="tag" style="background:var(--muted)">${esc(D.teams[tk].mgr)}</span>`:''}</span></span><span class="sts">${statLbl(p).map((l,i)=>`${l} ${p.s[i]}`).slice(0,2).join(' · ')}<br>${statLbl(p).map((l,i)=>`${l} ${p.s[i]}`).slice(2).join(' · ')}</span></button>`}
+    h+=`<button class="prow${p.ars?' ars':''}" data-pid="${p.id}"${tk>=0?' disabled':''}><span class="ov">${effOvr(p,sp)}</span><span style="min-width:0"><span class="nm">${esc(p.name)}</span><span class="sub">${p.pos} · ${p.nat} · ${eraLabel(p)}${mine?'<span class="tag">IN XI</span>':''}${tk>=0?`<span class="tag" style="background:var(--muted)">${esc(CT.teams[tk].mgr)}</span>`:''}</span></span><span class="sts">${statLbl(p).map((l,i)=>`${l} ${p.s[i]}`).slice(0,2).join(' · ')}<br>${statLbl(p).map((l,i)=>`${l} ${p.s[i]}`).slice(2).join(' · ')}</span></button>`}
   $('#pkList').innerHTML=h||'<p class="muted">No legends match.</p>'}
-function assign(pid){const t=D.teams[pk.team];if(taken(pid,pk.team)>=0)return;const j=t.xi.indexOf(pid);if(j>=0&&j!==pk.slot)t.xi[j]=t.xi[pk.slot];t.xi[pk.slot]=pid;save();$('#sheet').hidden=true;renderSetup()}
+function assign(pid){const t=CT.teams[pk.team];if(taken(pid,pk.team)>=0)return;const j=t.xi.indexOf(pid);if(j>=0&&j!==pk.slot)t.xi[j]=t.xi[pk.slot];t.xi[pk.slot]=pid;save();$('#sheet').hidden=true;renderSetup()}
 $('#pkQ').addEventListener('input',e=>{pk.q=e.target.value;renderPicker();$('#pkList').scrollTop=0});
 $('#pkClose').onclick=()=>$('#sheet').hidden=true;
-$('#pkRemove').onclick=()=>{D.teams[pk.team].xi[pk.slot]=null;save();$('#sheet').hidden=true;renderSetup()};
+$('#pkRemove').onclick=()=>{CT.teams[pk.team].xi[pk.slot]=null;save();$('#sheet').hidden=true;renderSetup()};
 $('#sheet').addEventListener('click',e=>{if(e.target.id==='sheet')$('#sheet').hidden=true});
 
 /* ============ DRAFT ============ */
 const dr={filter:'all',q:''};
 const SNAKE=[0,1,1,0];
 const draftTurn=()=>D.draft?SNAKE[D.draft.picks.length%4]:-1;
-function startDraft(){D.mode='draft';D.draft={picks:[]};D.teams.forEach(t=>t.xi=Array(11).fill(null));save();renderSetup();snack(`${D.teams[0].mgr} picks first`)}
+function startDraft(){D.mode='draft';D.draft={picks:[]};CT.teams.forEach(t=>t.xi=Array(11).fill(null));save();renderSetup();snack(`${CT.teams[0].mgr} picks first`)}
 function bestSlot(t,p){const sl=FORMS[t.form];let best=-1,bs=-99;sl.forEach((s,i)=>{if(t.xi[i]!=null)return;const f=fit(p,s[0]);const sc=(f==='nat'?100:f==='line'?50:0)+(s[0]==='GK'&&p.pos!=='GK'?-200:0)+(p.pos==='GK'&&s[0]!=='GK'?-200:0);if(sc>bs){bs=sc;best=i}});return best}
-function draftPick(pid){if(!D.draft)return;const ti=draftTurn(),t=D.teams[ti];if(taken(pid,-1)>=0)return;const i=bestSlot(t,PL[pid]);if(i<0)return;
+function draftPick(pid){if(!D.draft)return;const ti=draftTurn(),t=CT.teams[ti];if(taken(pid,-1)>=0)return;const i=bestSlot(t,PL[pid]);if(i<0)return;
   t.xi[i]=pid;D.draft.picks.push({ti,i,pid});dr.q='';$('#draftQ').value='';
   if(D.draft.picks.length>=22){D.draft=null;D.mode='build';snack('Draft complete');}
   save();renderSetup()}
-function renderDraft(){const bar=$('#draftbar');bar.hidden=false;const ti=draftTurn(),t=D.teams[ti];
+function renderDraft(){const bar=$('#draftbar');bar.hidden=false;const ti=draftTurn(),t=CT.teams[ti];
   $('#draftWho').innerHTML=`<span class="who" style="--kit:${kitOf(t.kit).a}"></span>${esc(t.mgr)} to pick`;
   const need=FORMS[t.form].map((s,i)=>t.xi[i]==null?s[0]:null).filter(Boolean);
   $('#draftCount').textContent=`Pick ${D.draft.picks.length+1} of 22 · needs ${[...new Set(need)].join(', ')}`;
@@ -483,9 +540,9 @@ function renderDraft(){const bar=$('#draftbar');bar.hidden=false;const ti=draftT
     .sort((a,b)=>b.ovr-a.ovr);
   $('#dlist').innerHTML=list.map(p=>`<button class="dp${p.ars?' ars':''}" data-dpid="${p.id}"><span class="ov">${p.ovr}</span><span style="min-width:0"><span class="nm">${esc(p.name)}</span><small>${p.pos} · ${p.nat} · ${eraLabel(p)}</small></span></button>`).join('')||'<p class="muted">Nobody left in this filter.</p>'}
 $('#draftQ').addEventListener('input',e=>{dr.q=e.target.value;renderDraft();$('#dlist').scrollTop=0});
-$('#draftUndo').onclick=()=>{const l=D.draft&&D.draft.picks.pop();if(l){D.teams[l.ti].xi[l.i]=null;save();renderSetup()}};
+$('#draftUndo').onclick=()=>{const l=D.draft&&D.draft.picks.pop();if(l){CT.teams[l.ti].xi[l.i]=null;save();renderSetup()}};
 $('#draftStop').onclick=()=>{D.draft=null;D.mode='build';save();renderSetup()};
-$('#draftAuto').onclick=()=>{const ti=draftTurn(),t=D.teams[ti];const need=FORMS[t.form].map((s,i)=>t.xi[i]==null?s[0]:null).filter(Boolean);
+$('#draftAuto').onclick=()=>{const ti=draftTurn(),t=CT.teams[ti];const need=FORMS[t.form].map((s,i)=>t.xi[i]==null?s[0]:null).filter(Boolean);
   const p=PL.filter(p=>taken(p.id,-1)<0&&need.some(n=>fit(p,n)==='nat')).sort((a,b)=>b.ovr-a.ovr)[0]||PL.find(p=>taken(p.id,-1)<0);if(p)draftPick(p.id)};
 
 /* ============ CODES ============ */
@@ -502,14 +559,14 @@ function parseCode(txt){txt=(txt||'').trim();const h=txt.match(/#m=([A-Za-z0-9._
 let codeCtx=null;
 function showCode(mode,text,ti){codeCtx={mode,ti};const sh=$('#codeSheet');sh.hidden=false;$('#cdErr').hidden=true;
   if(mode==='copy'){$('#cdTitle').textContent='Copy this code';$('#cdHint').textContent='Copying was blocked here. Select the text and copy it yourself.';$('#cdText').value=text;$('#cdBtns').innerHTML='';setTimeout(()=>$('#cdText').select(),30);return}
-  $('#cdTitle').textContent=mode==='team'?`Paste into ${teamName(D.teams[ti])}`:'Open a match';$('#cdHint').textContent=mode==='team'?'Paste the team code the other player copied from their phone.':'Paste a match link or code. Same code, same match: you will both watch the identical game.';
+  $('#cdTitle').textContent=mode==='team'?`Paste into ${teamName(CT.teams[ti])}`:'Open a match';$('#cdHint').textContent=mode==='team'?'Paste the team code the other player copied from their phone.':'Paste a match link or code. Same code, same match: you will both watch the identical game.';
   $('#cdText').value='';$('#cdBtns').innerHTML=`<button class="cta sm" id="cdApply">${mode==='team'?'Use this team':'Open match'}</button>`;
   $('#cdApply').onclick=()=>{try{const r=parseCode($('#cdText').value);
-      if(r.type==='team'){const other=new Set(D.teams[1-ti].xi);r.team.xi=r.team.xi.map(x=>other.has(x)?null:x);D.teams[ti]=r.team;save();renderSetup();sh.hidden=true;snack('Team loaded')}
-      else{D.teams=[r.A,r.B];D.len=r.len;save();sh.hidden=true;openStudio(r.seed)}}
+      if(r.type==='team'){const other=new Set(CT.teams[1-ti].xi);r.team.xi=r.team.xi.map(x=>other.has(x)?null:x);CT.teams[ti]=r.team;save();renderSetup();sh.hidden=true;snack('Team loaded')}
+      else{CT.teams=[r.A,r.B];D.len=r.len;save();sh.hidden=true;openStudio(r.seed)}}
     catch(err){$('#cdErr').hidden=false;$('#cdErr').textContent='That code could not be read. Check it was copied in full.'}}}
 $('#cdClose').onclick=()=>$('#codeSheet').hidden=true;
-$('#pasteMatch').onclick=()=>showCode('match');
+
 
 /* ============ HISTORY ============ */
 const hist=()=>store.get('lxi.duel.history',[]);
@@ -517,13 +574,13 @@ function h2h(a,b){const A=a.toLowerCase(),B=b.toLowerCase();let w=0,l=0,d=0,gf=0
   for(const h of hist()){const m=[h.a.mgr.toLowerCase(),h.b.mgr.toLowerCase()];let me;if(m[0]===A&&m[1]===B)me=0;else if(m[0]===B&&m[1]===A)me=1;else continue;
     const g=[h.a.g,h.b.g];gf+=g[me];ga+=g[1-me];if(g[me]>g[1-me])w++;else if(g[me]<g[1-me])l++;else d++}
   return {w,d,l,gf,ga,n:w+d+l}}
-function renderH2h(el){const [a,b]=D.teams,r=h2h(a.mgr||'',b.mgr||'');if(!r.n){el.hidden=true;return}el.hidden=false;
+function renderH2h(el){const [a,b]=CT.teams,r=h2h(a.mgr||'',b.mgr||'');if(!r.n){el.hidden=true;return}el.hidden=false;
   el.innerHTML=`<div><div class="eyebrow">All-time head-to-head</div><span class="muted">${r.n} match${r.n>1?'es':''} · goals ${r.gf}–${r.ga}</span></div><div><b>${r.w}</b> <span class="muted">${esc(a.mgr)} wins</span></div><div><b>${r.d}</b> <span class="muted">draws</span></div><div><b>${r.l}</b> <span class="muted">${esc(b.mgr)} wins</span></div>`}
 function recordResult(){if(!match||match.recorded)return;match.recorded=true;const h=hist();h.unshift({at:Date.now(),seed:match.seed,a:{mgr:match.A.mgr,name:teamName(match.A),g:match.res.final[0]},b:{mgr:match.B.mgr,name:teamName(match.B),g:match.res.final[1]}});store.set('lxi.duel.history',h.slice(0,200))}
 
 /* ============ STUDIO ============ */
-function show(v){['setup','studio','report'].forEach(k=>$('#v-'+k).hidden=k!==v);window.scrollTo(0,0)}
-function readyTeams(){const out=D.teams.map(t=>{const c=JSON.parse(JSON.stringify(t));c.name=teamName(t);return c});
+function show(v){['setup','studio','report','room'].forEach(k=>$('#v-'+k).hidden=k!==v);window.scrollTo(0,0)}
+function readyTeams(){const out=CT.teams.map(t=>{const c=JSON.parse(JSON.stringify(t));c.name=teamName(t);return c});
   const used=new Set(out.flatMap(t=>t.xi).filter(x=>x!=null));
   out.forEach(c=>{const before=new Set(c.xi);c.xi=autofill(c.form,c.xi,PL.filter(p=>!used.has(p.id)));c.xi.forEach(x=>{if(!before.has(x))used.add(x)})});return out}
 function kitPair(A,B){let ka=kitOf(A.kit),kb=kitOf(B.kit);if(ka.id===kb.id||ka.a===kb.a)kb=KITS.find(k=>k.id!==ka.id&&k.id!==(ka.id==='white'?'sky':'white'))||KITS[1];return [ka,kb]}
@@ -531,13 +588,13 @@ function openStudio(seed){
   if(D.draft){snack('Finish the draft first');return}
   const [A,B]=readyTeams();
   const s=seed||((Math.random()*2147483646)|0)+1;
-  match={A,B,seed:s,len:D.len,res:null,comm:null,recorded:false};
+  match={A,B,seed:s,len:8,res:null,comm:null,recorded:false,room:CT!==D};
   const pre=STUDIO.preMatch(A,B,s);match.pre=pre;const [ka,kb]=kitPair(A,B);match.kits=[ka,kb];
   $('#sVs').innerHTML=`<div class="side" style="--kit:${ka.a}"><span class="k"></span><h2>${esc(A.name)}</h2><div class="ovr">${A.form} · OVR ${Math.round(pre.a.ovr)} · ${esc(A.mgr)}</div></div><div class="vs">VS</div><div class="side r" style="--kit:${kb.a}"><span class="k"></span><h2>${esc(B.name)}</h2><div class="ovr">${esc(B.mgr)} · OVR ${Math.round(pre.b.ovr)} · ${B.form}</div></div>`;
   const pr=pre.prob;$('#sProb').innerHTML=`<div style="width:${pr.a}%;background:${ka.a};color:${txtOn(ka.a)}">${pr.a}%</div><div style="width:${pr.d}%;background:#3a4a40">${pr.d}%</div><div style="width:${pr.b}%;background:${kb.a};color:${txtOn(kb.a)}">${pr.b}%</div>`;
   $('#sPanel').innerHTML=pre.panel.map(l=>{const pd=pre.preds.find(p=>p.who===l.who);return punditCard(l.who,l.text,pd?`Prediction: ${pd.score[0]}–${pd.score[1]}`:'')}).join('');
   $('#sLineups').innerHTML=[A,B].map(t=>`<div><div class="eyebrow" style="margin-bottom:6px">${esc(t.name)} · ${t.form}</div><ol>${FORMS[t.form].map((s,i)=>`<li><span>${s[0]}</span><span>${esc(PL[t.xi[i]].name)}</span></li>`).join('')}</ol></div>`).join('');
-  show('studio');history.replaceState(null,'','#m='+matchCode(match).slice(0));
+  studioButtons();show('studio');if(!match.room)history.replaceState(null,'','#m='+matchCode(match));
 }
 function txtOn(hex){const c=parseInt(hex.slice(1),16),r=c>>16,g=c>>8&255,b=c&255;return (r*299+g*587+b*114)/1000>150?'#0a1410':'#fff'}
 function punditCard(who,text,extra){const c=STUDIO.CAST[who];const ini=c.name.split(' ').map(w=>w[0]).join('');
@@ -548,7 +605,7 @@ function ensureSim(cb){if(match.res){cb();return}$('#busy').hidden=false;$('#bus
 $('#toStudio').onclick=()=>openStudio();
 $('#backSetup').onclick=()=>{show('setup');renderSetup();history.replaceState(null,'','/')};
 $('#shareMatch').onclick=()=>copy(location.origin+location.pathname+'#m='+matchCode(match));
-$('#watchLive').onclick=()=>ensureSim(()=>startWatch(true,0));
+$('#watchLive').onclick=()=>{if(match.room){RM.net.send('go',{});goNow()}else ensureSim(()=>startWatch(true,0))};
 $('#simResult').onclick=()=>ensureSim(()=>{recordResult();openReport()});
 
 /* ============ REPORT ============ */
@@ -559,6 +616,7 @@ function openReport(){
   $('#rFinal').innerHTML=`<div class="side"><h2 style="border-bottom:5px solid ${ka.a};display:inline-block">${esc(A.name)}</h2><ul>${goalsOf(0).map(g=>`<li>${g}</li>`).join('')}</ul></div><div class="sc">${r.final[0]}–${r.final[1]}</div><div class="side r"><h2 style="border-bottom:5px solid ${kb.a};display:inline-block">${esc(B.name)}</h2><ul>${goalsOf(1).map(g=>`<li>${g}</li>`).join('')}</ul></div>`;
   $('#rActions').innerHTML=`<button class="cta" id="rWatch">Watch full match</button><button class="cta ghost" id="rRematch">Rematch</button><button class="cta ghost" id="rShare">Copy match link</button><button class="cta ghost" id="rEdit">Change teams</button>`;
   $('#rWatch').onclick=()=>startWatch(false,0);$('#rRematch').onclick=()=>openStudio();$('#rShare').onclick=()=>copy(location.origin+location.pathname+'#m='+matchCode(match));$('#rEdit').onclick=()=>{show('setup');renderSetup()};
+  if(match.room){$('#rRematch').textContent='Back to room';$('#rRematch').onclick=()=>backToRoom();$('#rShare').hidden=true;$('#rEdit').hidden=true}
   renderH2h($('#rH2h'));
   $('#rPanel').innerHTML=ft.panel.map(l=>punditCard(l.who,l.text)).join('');
   const s=r.stats,row=(lbl,a,b,fmt)=>{const ta=+a,tb=+b,tot=(ta+tb)||1;return `<tr><td>${fmt?fmt(a):a}</td><td>${lbl}<div class="bars"><i style="width:${ta/tot*100}%;background:${ka.a}"></i><i style="width:${tb/tot*100}%;background:${kb.a}"></i></div></td><td>${fmt?fmt(b):b}</td></tr>`};
@@ -666,12 +724,12 @@ window.addEventListener('resize',resize3D);
 
 function startWatch(live,from){
   if(typeof THREE==='undefined'){snack('3D engine failed to load. Check your connection.');return}
-  setupMatch3D();Object.assign(V,{live,pt:from||0,speed:1,playing:true,maxPt:live?0:match.res.dur,ci:0,htShown:!live||(from||0)>match.res.dur/2,ended:false,shown:[],possT:-1,director:{mode:'broadcast',until:0}});
+  setupMatch3D();Object.assign(V,{live,pt:from||0,speed:3,playing:true,maxPt:live?0:match.res.dur,ci:0,htShown:!live||(from||0)>match.res.dur/2,ended:false,shown:[],possT:-1,director:{mode:'broadcast',until:0}});
   const [A,B]=[match.A,match.B],[ka,kb]=match.kits;
   $('#bA').textContent=abbr(A);$('#bA').style.background=ka.a;$('#bA').style.color=txtOn(ka.a);$('#bB').textContent=abbr(B);$('#bB').style.background=kb.a;$('#bB').style.color=txtOn(kb.a);
   $('#pbA').style.background=ka.a;$('#pbB').style.background=kb.a;
   $('#cams').innerHTML=CAMS.map(([k,l])=>`<button class="chip${V.cam===k?' on':''}" data-cam="${k}">${l}</button>`).join('');
-  $('#speeds').innerHTML=[1,2,4,8].map(s=>`<button class="chip${V.speed===s?' on':''}" data-sp="${s}">${s}×</button>`).join('');
+  $('#speeds').innerHTML=[1,2,3,6].map(s=>`<button class="chip${V.speed===s?' on':''}" data-sp="${s}">${s}×</button>`).join('');
   renderTogs();$('#feed').innerHTML='';$('#wOvl').hidden=true;$('#watch').hidden=false;document.body.style.overflow='hidden';
   resize3D();seek(V.pt,true);drawMarks();V.lastT=performance.now();cancelAnimationFrame(V.raf);V.raf=requestAnimationFrame(tick);
   try{navigator.wakeLock&&navigator.wakeLock.request('screen').then(w=>V.wl=w).catch(()=>{})}catch(e){}
@@ -679,15 +737,17 @@ function startWatch(live,from){
 }
 function renderTogs(){$('#togs').innerHTML=[['shape','Team shape'],['names','All names'],['voice','Voice'],['crowd','Crowd']].map(([k,l])=>`<button class="chip${V[k]?' on':''}" data-tog="${k}">${l}</button>`).join('')+`<button class="chip" data-tog="stats">Stats</button>`}
 function leaveWatch(){cancelAnimationFrame(V.raf);$('#watch').hidden=true;document.body.style.overflow='';try{speechSynthesis.cancel()}catch(e){}crowdLevel(0);try{V.wl&&V.wl.release()}catch(e){}}
-$('#wClose').onclick=()=>{leaveWatch();if(V.ended||!V.live)openReport();else show('studio')};
+$('#wClose').onclick=()=>{leaveWatch();if(match&&match.room){backToRoom();return}if(V.ended||!V.live)openReport();else show('studio')};
 $('#watch').addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;const ds=b.dataset;
   if(ds.cam){V.cam=ds.cam;$$('#cams .chip').forEach(c=>c.classList.toggle('on',c.dataset.cam===V.cam));G.controls.enabled=V.cam==='orbit';if(V.cam==='orbit'){G.controls.target.copy(G.camTarget)}return}
-  if(ds.sp){V.speed=+ds.sp;$$('#speeds .chip').forEach(c=>c.classList.toggle('on',+c.dataset.sp===V.speed));if(V.speed>2)try{speechSynthesis.cancel()}catch(e){}return}
+  if(ds.sp){V.speed=+ds.sp;syncButtons();if(V.speed>2)try{speechSynthesis.cancel()}catch(e){}roomSync();return}
   if(ds.tog){const k=ds.tog;if(k==='stats'){showStats();return}V[k]=!V[k];if(k==='crowd'){crowdInit();crowdLevel(V.crowd?.06:0)}if(k==='voice'&&!V.voice)try{speechSynthesis.cancel()}catch(e){}renderTogs();return}
 });
-$('#wPlay').onclick=()=>{V.playing=!V.playing;$('#wPlay').textContent=V.playing?'❚❚':'▶';$('#wPlay').setAttribute('aria-label',V.playing?'Pause':'Play')};
-$('#wSkip').onclick=()=>{V.maxPt=match.res.dur;V.htShown=true;seek(match.res.dur-.05,true);drawMarks()};
+function syncButtons(){$('#wPlay').textContent=V.playing?'❚❚':'▶';$('#wPlay').setAttribute('aria-label',V.playing?'Pause':'Play');$$('#speeds .chip').forEach(c=>c.classList.toggle('on',+c.dataset.sp===V.speed))}
+$('#wPlay').onclick=()=>{V.playing=!V.playing;syncButtons();roomSync()};
+$('#wSkip').onclick=()=>{V.maxPt=match.res.dur;V.htShown=true;seek(match.res.dur-.05,true);drawMarks();roomSync()};
 $('#wScrub').addEventListener('input',e=>{const t=(+e.target.value/1000)*match.res.dur;seek(V.live?Math.min(t,V.maxPt):t,true)});
+$('#wScrub').addEventListener('change',()=>roomSync());
 
 function drawMarks(){const r=match.res,[ka,kb]=match.kits;$('#marks').innerHTML=r.events.filter(e=>(e.type==='goal'||e.type==='ht')&&e.t<=V.maxPt+.01).map(e=>`<span class="mk" style="left:${e.t/r.dur*100}%;background:${e.type==='ht'?'#fff':(e.team?kb.a:ka.a)}"></span>`).join('')}
 function seek(t,hard){const r=match.res;V.pt=Math.max(0,Math.min(t,r.dur-.02));
@@ -774,23 +834,144 @@ function updateCamera(dt,i,carrier,bx,by,bz){const r=match.res,cam=G.camera;cons
 }
 function liveStatsAt(t){const r=match.res;const ev=r.events.filter(e=>e.t<=t);const s=[0,1].map(()=>({shots:0,sot:0,xg:0,corners:0,fouls:0}));
   for(const e of ev){if(e.type==='shot'){const tm=r.players[e.p].team;s[tm].shots++;s[tm].xg+=e.xg}if(e.type==='save')s[1-r.players[e.p].team].sot++;if(e.type==='goal'&&!e.og)s[e.team].sot++;if(e.type==='corner')s[e.team].corners++;if(e.type==='foul')s[r.players[e.p].team].fouls++}return s}
-function showStats(){V.playing=false;$('#wPlay').textContent='▶';const r=match.res,{i}=frameAt(V.pt),s=liveStatsAt(V.pt),p=STUDIO.possAt(r,i),[A,B]=[match.A,match.B];
+function showStats(){V.playing=false;syncButtons();roomSync();const r=match.res,{i}=frameAt(V.pt),s=liveStatsAt(V.pt),p=STUDIO.possAt(r,i),[A,B]=[match.A,match.B];
   $('#wCard').innerHTML=`<div class="eyebrow">Live stats · ${Math.floor(r.clock[i])}'</div><h2>${esc(A.name)} ${r.score[i*2]}–${r.score[i*2+1]} ${esc(B.name)}</h2>
   <table class="stats">${[['Possession %',p[0],p[1]],['Shots',s[0].shots,s[1].shots],['On target',s[0].sot,s[1].sot],['xG',s[0].xg.toFixed(2),s[1].xg.toFixed(2)],['Corners',s[0].corners,s[1].corners],['Fouls',s[0].fouls,s[1].fouls]].map(([l,a,b])=>`<tr><td>${a}</td><td>${l}</td><td>${b}</td></tr>`).join('')}</table>
-  <button class="cta" id="wRes">Resume</button>`;$('#wOvl').hidden=false;$('#wRes').onclick=()=>{$('#wOvl').hidden=true;V.playing=true;$('#wPlay').textContent='❚❚'}}
+  <button class="cta" id="wRes">Resume</button>`;$('#wOvl').hidden=false;$('#wRes').onclick=()=>{$('#wOvl').hidden=true;V.playing=true;syncButtons();roomSync()}}
 function showHT(){const ht=STUDIO.halfTime(match.res),r=match.res,[A,B]=[match.A,match.B];const s=ht.s;
   $('#wCard').innerHTML=`<div class="eyebrow">Half-time studio</div><div class="bigsc">${esc(A.name)} ${s[0].goals}–${s[1].goals} ${esc(B.name)}</div>
   <div class="mini-stats"><div><b>${ht.poss[0]}–${ht.poss[1]}</b><span>Possession %</span></div><div><b>${s[0].shots}–${s[1].shots}</b><span>Shots</span></div><div><b>${s[0].xg.toFixed(2)}–${s[1].xg.toFixed(2)}</b><span>xG</span></div><div><b>${s[0].sot}–${s[1].sot}</b><span>On target</span></div></div>
   <div class="panel-grid">${ht.panel.map(l=>punditCard(l.who,l.text)).join('')}</div><button class="cta" id="wCont">Second half</button>`;
-  $('#wOvl').hidden=false;$('#wCont').onclick=()=>{$('#wOvl').hidden=true};}
+  $('#wOvl').hidden=false;$('#wCont').onclick=()=>{$('#wOvl').hidden=true;roomSync()};}
 function fullTimeHud(){recordResult();const r=match.res;banner(`Full time<small>${r.final[0]} – ${r.final[1]}</small>`,3000);crowdLevel(V.crowd?.25:0,3);
   setTimeout(()=>{if($('#watch').hidden)return;$('#wCard').innerHTML=`<div class="eyebrow">Full time</div><div class="bigsc">${esc(match.A.name)} ${r.final[0]}–${r.final[1]} ${esc(match.B.name)}</div><div class="panel-grid">${STUDIO.fullTime(r).panel.slice(0,2).map(l=>punditCard(l.who,l.text)).join('')}</div><div class="tact"><button class="cta" id="wRep">Full report</button><button class="cta ghost" id="wAgain">Watch again</button></div>`;
-    $('#wOvl').hidden=false;$('#wRep').onclick=()=>{leaveWatch();openReport()};$('#wAgain').onclick=()=>{V.live=false;$('#wOvl').hidden=true;V.ended=false;seek(0,true)}},3200)}
+    $('#wOvl').hidden=false;$('#wRep').onclick=()=>{leaveWatch();openReport()};if(match.room){$('#wAgain').textContent='Back to room';$('#wAgain').onclick=()=>{leaveWatch();backToRoom()}}else $('#wAgain').onclick=()=>{V.live=false;$('#wOvl').hidden=true;V.ended=false;seek(0,true)}},3200)}
+
+/* ============ ONLINE ROOMS ============ */
+// Supabase Realtime is used only as a message relay between the two phones (broadcast + presence). No tables, no stored data.
+const SB_URL='https://anueveizfqxnloncuvmf.supabase.co',SB_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFudWV2ZWl6ZnF4bmxvbmN1dm1mIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODkzOTI5NzQsImV4cCI6MjEwNDk2ODk3NH0.GSCWK9tDgyF1PH_PzdxrB2Q8Hy5MFiAV2Ts-XykTBLI';
+const myId=(()=>{let v=store.get('lxi.pid',null);if(!v){v=Math.random().toString(36).slice(2,10);store.set('lxi.pid',v)}return v})();
+let RM=null;
+function newCode(){const a='ABCDEFGHJKLMNPQRSTUVWXYZ23456789';let s='';const r=(window.crypto&&crypto.getRandomValues)?crypto.getRandomValues(new Uint8Array(6)):Array.from({length:6},()=>Math.random()*256|0);for(const x of r)s+=a[x%a.length];return s}
+function blankTeam(role){const mine=myLxi&&FORMS[myLxi.form]?{form:myLxi.form,xi:myLxi.xi.slice()}:null;
+  if(role===0){const a=mine||{form:PRESETS.ars.form,xi:PRESETS.ars.names.map(byName)};return {mgr:'Player 1',name:'Player 1 XI',kit:'red',form:a.form,xi:a.xi}}
+  return {mgr:'Player 2',name:'Player 2 XI',kit:'navy',form:mine?mine.form:'4-3-3',xi:mine?mine.xi.slice():Array(11).fill(null)}}
+function placeholder(role){return {mgr:'Player '+(role+1),name:'',kit:role?'navy':'red',form:'4-3-3',xi:Array(11).fill(null),ph:true}}
+const roomLink=()=>location.origin+'/?room='+RM.code;
+const sig=t=>t?t.form+'|'+t.xi.join(','):'';
+function makeNet(code,h){
+  const hs={};const on=(t,f)=>{(hs[t]=hs[t]||[]).push(f);return ()=>{hs[t]=(hs[t]||[]).filter(x=>x!==f)}};
+  const dispatch=(t,d)=>{(hs[t]||[]).slice().forEach(f=>f(d));h.onMsg(t,d)};
+  let api;
+  const local=!!window.__lxiRelay||new URLSearchParams(location.search).get('net')==='local';
+  if(local||!window.supabase){
+    if(!local)snack('Online service did not load. Check your connection.');
+    const bc=window.__lxiRelay?window.__lxiRelay(code):new BroadcastChannel('lxi-'+code),seen={};let me={id:myId,role:RM.role};
+    const emitP=()=>{const now=Date.now();for(const k in seen)if(now-seen[k].at>4000)delete seen[k];h.onPresence([me,...Object.values(seen)])};
+    bc.onmessage=e=>{const m=e.data;if(m.t==='__p'){seen[m.d.id]=Object.assign({},m.d,{at:Date.now()});return}if(m.t==='__bye'){delete seen[m.d.id];emitP();return}dispatch(m.t,m.d)};
+    const hb=setInterval(()=>{bc.postMessage({t:'__p',d:me});emitP()},1000);setTimeout(()=>{bc.postMessage({t:'__p',d:me})},30);setTimeout(()=>{emitP();h.onStatus('ok')},1300);
+    api={send:(t,d)=>bc.postMessage({t,d}),track:m=>{me=m;bc.postMessage({t:'__p',d:me})},close:()=>{clearInterval(hb);bc.postMessage({t:'__bye',d:me});bc.close()}};
+  }else{
+    const client=window.supabase.createClient(SB_URL,SB_KEY,{realtime:{params:{eventsPerSecond:80}},auth:{persistSession:false}});
+    const ch=client.channel('lxi-room-'+code,{config:{broadcast:{self:false,ack:false},presence:{key:myId}}});let meta={id:myId,role:RM.role};
+    ch.on('broadcast',{event:'m'},({payload})=>dispatch(payload.t,payload.d));
+    ch.on('presence',{event:'sync'},()=>{const st=ch.presenceState();h.onPresence(Object.values(st).map(a=>a[a.length-1]).filter(Boolean))});
+    ch.subscribe(st=>{if(st==='SUBSCRIBED'){ch.track(meta);h.onStatus('ok')}else if(st==='CHANNEL_ERROR'||st==='TIMED_OUT'||st==='CLOSED')h.onStatus('err')});
+    api={send:(t,d)=>ch.send({type:'broadcast',event:'m',payload:{t,d}}),track:m=>{meta=m;ch.track(m)},close:()=>{try{ch.untrack();client.removeChannel(ch)}catch(e){}}};
+  }
+  api.on=on;return api}
+function openRoom(code,create){
+  if(RM)leaveRoom(true);
+  const saved=store.get('lxi.room.'+code,null);
+  RM={code,role:create?0:(saved?saved.role:-1),teams:[placeholder(0),placeholder(1)],ready:[false,false],here:[false,false],status:'connecting',liveLen:3,sent:'',busy:false,ctrl:null};
+  if(RM.role===0||RM.role===1)RM.teams[RM.role]=(saved&&saved.team)||blankTeam(RM.role);
+  CT=RM;if(new URLSearchParams(location.search).get('room')!==code)history.replaceState(null,'','/?room='+code);
+  show('room');renderRoom();
+  RM.net=makeNet(code,{onPresence:roomPresence,onMsg:roomMsg,onStatus:st=>{RM.status=st;if(st==='ok'){RM.net.send('hello',{role:RM.role});sendTeam(true)}renderRoom()}});
+}
+function leaveRoom(silent){if(!RM)return;try{RM.net.send('bye',{role:RM.role});RM.net.close()}catch(e){}RM=null;CT=D;if(!silent){history.replaceState(null,'','/');show('setup');renderSetup()}}
+function roomPersist(){if(RM&&RM.role<2&&RM.role>=0)store.set('lxi.room.'+RM.code,{role:RM.role,team:RM.teams[RM.role]})}
+function roomSave(){if(!RM||RM.role<0||RM.role>1)return;const t=RM.teams[RM.role];if(sig(t)!==RM.sent&&RM.ready[RM.role]){RM.ready[RM.role]=false}roomPersist();clearTimeout(roomSave.t);roomSave.t=setTimeout(()=>sendTeam(),150)}
+function sendTeam(force){if(!RM||RM.role<0||RM.role>1||!RM.net)return;const t=RM.teams[RM.role];RM.sent=sig(t);RM.net.send('team',{role:RM.role,team:t,ready:RM.ready[RM.role],id:myId})}
+function roomPresence(list){if(!RM)return;const others=list.filter(p=>p&&p.id!==myId);
+  if(RM.role<0||((RM.role===0||RM.role===1)&&others.some(p=>p.role===RM.role&&p.id<myId))){const used=new Set(others.map(p=>p.role));const nr=!used.has(0)?0:!used.has(1)?1:2;
+    if(nr!==RM.role){const had=RM.role;RM.role=nr;if(nr<2){RM.teams[nr]=(had<0?null:RM.teams[had])||blankTeam(nr);if(RM.teams[nr].ph)RM.teams[nr]=blankTeam(nr);if(had>=0&&had<2&&had!==nr)RM.teams[had]=placeholder(had);roomPersist()}
+      RM.net.track({id:myId,role:RM.role});RM.net.send('hello',{role:RM.role});sendTeam(true)}}
+  const prev=RM.here.slice(),prevRole=RM.role;RM.here=[false,false];if(RM.role<2)RM.here[RM.role]=true;for(const p of others)if(p.role===0||p.role===1)RM.here[p.role]=true;
+  for(const r of [0,1])if(prev[r]&&!RM.here[r]&&r!==RM.role){RM.ready[r]=false;snack(RM.teams[r].mgr+' left the room')}
+  if(!prev[1-RM.role]&&RM.here[1-RM.role]&&RM.role<2)snack(RM.teams[1-RM.role].mgr+' joined');
+  if(prev[0]!==RM.here[0]||prev[1]!==RM.here[1]||RM._rr!==RM.role){RM._rr=RM.role;renderRoom({mine:RM._mineDrawn?false:undefined});RM._mineDrawn=true}}
+function roomMsg(t,d){if(!RM)return;
+  if(t==='hello'){sendTeam(true);return}
+  if(t==='team'){if(d.role===RM.role||d.role<0||d.role>1)return;RM.teams[d.role]=d.team;RM.ready[d.role]=!!d.ready;RM.here[d.role]=true;
+    let lostMine=false;if(RM.role===1&&d.role===0){const mine=RM.teams[1];const theirs=new Set(d.team.xi);const lost=mine.xi.filter(x=>x!=null&&theirs.has(x));if(lost.length){mine.xi=mine.xi.map(x=>theirs.has(x)?null:x);lostMine=true;RM.ready[1]=false;roomPersist();sendTeam();snack(lost.map(x=>PL[x].short).join(', ')+' already picked by '+d.team.mgr)}}
+    if(!$('#sheet').hidden)renderPicker();renderRoom(lostMine?undefined:{mine:false});return}
+  if(t==='start'){beginMatch(d);return}
+  if(t==='go'){goNow();return}
+  if(t==='sync'){applySync(d);return}
+  if(t==='bye'){if(d.role===0||d.role===1){RM.here[d.role]=false;RM.ready[d.role]=false;renderRoom()}return}
+}
+function oppCard(ti){const t=RM.teams[ti],k=kitOf(t.kit),st=teamStats(t.form,t.xi),on=RM.here[ti];
+  return `<div class="tcard oppcard" style="--kit:${k.a}"><div class="band"></div><div class="in">
+    <div><div class="eyebrow">${ti===RM.role?'You':'Opponent'} · Player ${ti+1}</div><h3 style="font-size:30px;margin-top:4px">${t.ph?esc('Player '+(ti+1)):esc(teamName(t))}</h3><span class="muted">${esc(t.mgr||'')}</span></div>
+    <div class="pstat" style="margin:0"><span class="pill ${on?'ok':'wait'}"><i></i>${on?'In the room':'Not here yet'}</span><span class="pill ${RM.ready[ti]?'ok':'wait'}"><i></i>${RM.ready[ti]?'Ready':'Still picking'}</span></div>
+    ${t.ph?'':`<div class="bigst tsum"><div><b>${st.ovr||'–'}</b><span>OVR</span></div><div><b>${st.n}</b><span>/11 picked</span></div><div><b>${t.form}</b></div></div>`}
+    <div class="hide">Their lineup is revealed at kick-off.</div></div></div>`}
+function renderRoom(opts){if(!RM)return;const r=RM.role,opp=r===0?1:0;
+  $('#rmCode').textContent=RM.code;$('#rmLink').textContent=roomLink();
+  $('#rmWho').textContent=r<0?'Joining…':r>1?'Watching (room is full)':`You are Player ${r+1}`;
+  $('#rmShare').hidden=r>1||(RM.here[0]&&RM.here[1]);
+  const conn=RM.status==='ok'?`<span class="pill ok"><i></i>Connected</span>`:RM.status==='err'?`<span class="pill"><i style="background:var(--bad)"></i>Connection problem, retrying</span>`:`<span class="pill wait"><i></i>Connecting…</span>`;
+  $('#rmStatus').innerHTML=conn+(r<2&&r>=0?`<span class="pill ${RM.here[opp]?'ok':'wait'}"><i></i>${RM.here[opp]?esc(RM.teams[opp].mgr)+' is here':'Waiting for Player '+(opp+1)+' to open the link'}</span>`:'');
+  if(r<0){$('#rmTeams').innerHTML='<p class="muted">Joining the room…</p>';$('#rmReady').hidden=true;$('#rmStart').hidden=true;return}
+  const layout=r>1?'s':r===0?'0':'1';
+  if($('#rmTeams').dataset.layout!==layout){$('#rmTeams').dataset.layout=layout;$('#rmTeams').innerHTML=r===1?'<div id="rmC0"></div><div id="rmC1"></div>':'<div id="rmC0"></div><div id="rmC1"></div>'}
+  if(r>1){$('#rmC0').innerHTML=oppCard(0);$('#rmC1').innerHTML=oppCard(1);$('#rmReady').hidden=true;$('#rmStart').hidden=true;return}
+  if(!opts||opts.mine!==false)$('#rmC'+r).innerHTML=cardHTML(RM.teams[r],r);
+  $('#rmC'+opp).innerHTML=oppCard(opp);
+  const st=teamStats(RM.teams[r].form,RM.teams[r].xi),me=RM.ready[r],both=RM.ready[0]&&RM.ready[1]&&RM.here[0]&&RM.here[1];
+  $('#rmReady').hidden=false;
+  $('#rmReady').innerHTML=`<div><b style="font-family:var(--display);font-size:24px;text-transform:uppercase">${me?'You are ready':st.n<11?`Pick ${11-st.n} more`:'XI complete'}</b><div class="muted" style="font-size:14px">${both?'Both ready. Choose how to play below.':me?`Waiting for ${esc(RM.teams[opp].mgr)}…`:'Lock in your XI when you are happy with it.'}</div></div><button class="cta${me?' ghost':''}" id="rmReadyBtn">${me?'Change my XI':'I’m ready'}</button>`;
+  $('#rmReadyBtn').onclick=()=>{if(!me&&st.n<11){snack('Pick all 11 first, or tap Auto-fill');return}RM.ready[r]=!me;sendTeam();renderRoom()};
+  $('#rmStart').hidden=!both;
+  $('#rmLen').innerHTML=[2,3,5].map(n=>`<button class="chip${RM.liveLen===n?' on':''}" data-rlen="${n}">${n} min</button>`).join('');
+  $$('#rmLen .chip').forEach(c=>c.onclick=()=>{RM.liveLen=+c.dataset.rlen;renderRoom()});
+}
+function beginMatch(d){if(!RM||RM.busy)return;RM.busy=true;
+  if(d.mode==='sim'){openStudio(d.seed);ensureSim(()=>{});RM.goAt=d.at;tickCountdown()}
+  else startLiveMatch(d)}
+function tickCountdown(){if(!RM||!RM.goAt)return;const left=Math.ceil((RM.goAt-Date.now())/1000);const el=$('#sCount');if(el)el.textContent=left>0?`Kick-off in ${left}s`:'Kick-off';
+  if(left<=0){goNow();return}clearTimeout(tickCountdown.t);tickCountdown.t=setTimeout(tickCountdown,250)}
+function goNow(){if(!RM||!RM.goAt)return;RM.goAt=0;clearTimeout(tickCountdown.t);ensureSim(()=>{startWatch(true,0);if(RM&&RM.role===0)RM.ctrl=setInterval(()=>{if(!$('#watch').hidden&&V.playing)roomSync()},5000)})}
+function studioButtons(){const room=!!(match&&match.room);$('#simResult').hidden=room;$('#shareMatch').hidden=room;$('#backSetup').hidden=room;$('#watchLive').textContent=room?'Kick off now':'Kick off and watch';
+  let c=$('#sCount');if(room&&!c){c=document.createElement('span');c.id='sCount';c.className='countdown';$('#watchLive').before(c)}if(c)c.hidden=!room}
+function roomSync(){if(!match||!match.room||!RM||!RM.net)return;RM.net.send('sync',{pt:V.pt,speed:V.speed,playing:V.playing,ov:$('#wOvl').hidden,ht:V.htShown,at:Date.now()})}
+function applySync(d){if(!match||!match.room||$('#watch').hidden)return;const pt=d.pt+(d.playing&&d.ov?(Date.now()-d.at)/1000*d.speed:0);
+  V.speed=d.speed;V.playing=d.playing;if(d.ov&&!$('#wOvl').hidden)$('#wOvl').hidden=true;if(d.ht)V.htShown=true;V.maxPt=Math.max(V.maxPt,pt);
+  if(Math.abs(pt-V.pt)>.6)seek(pt,true);syncButtons();drawMarks()}
+function backToRoom(){if(RM&&RM.ctrl){clearInterval(RM.ctrl);RM.ctrl=null}if(!RM){show('setup');renderSetup();return}RM.busy=false;RM.ready=[false,false];sendTeam();show('room');renderRoom()}
+function startLiveMatch(d){
+  if(typeof LIVE==='undefined'){snack('Live mode failed to load');RM.busy=false;return}
+  if(RM.role>1){snack('The room is full. Two players are already in this match.');RM.busy=false;return}
+  const [A,B]=readyTeams(),kits=kitPair(A,B);const role=RM.role;
+  setTimeout(()=>{LIVE.start({teams:[A,B],kits,role,host:role===0,net:RM.net,dur:d.dur||180,
+    onResult:res=>{const h=hist();h.unshift({at:Date.now(),live:true,a:{mgr:A.mgr,name:A.name,g:res.score[0]},b:{mgr:B.mgr,name:B.name,g:res.score[1]}});store.set('lxi.duel.history',h.slice(0,200))},
+    onExit:()=>backToRoom()})},Math.max(0,(d.at||0)-Date.now()));
+  snack('Kick-off…')}
+$('#createRoom').onclick=()=>openRoom(newCode(),true);
+$('#rmLeave').onclick=()=>leaveRoom(false);
+$('#rmCopy').onclick=()=>copy(roomLink());
+$('#rmShareBtn').onclick=async()=>{const url=roomLink();if(navigator.share){try{await navigator.share({title:'Legends XI',text:'Pick your XI and play me in Legends XI',url});return}catch(e){if(e&&e.name==='AbortError')return}}copy(url)};
+$('#rmSim').onclick=()=>{if(!RM)return;const d={mode:'sim',seed:((Math.random()*2147483646)|0)+1,at:Date.now()+20000};RM.net.send('start',d);beginMatch(d)};
+$('#rmLive').onclick=()=>{if(!RM)return;const d={mode:'live',dur:RM.liveLen*60,at:Date.now()+2500};RM.net.send('start',d);beginMatch(d)};
+window.addEventListener('pagehide',()=>{if(RM)try{RM.net.send('bye',{role:RM.role})}catch(e){}});
 
 /* ============ BOOT ============ */
 renderSetup();
+const rq=new URLSearchParams(location.search).get('room');
+if(rq&&/^[A-Z2-9]{6}$/.test(rq.toUpperCase()))openRoom(rq.toUpperCase(),false);
 const hm=location.hash.match(/#m=([A-Za-z0-9._-]+)/);
-if(hm){try{const r=parseCode(hm[1]);if(r.type==='match'){D.teams=[r.A,r.B];D.len=r.len;D.draft=null;D.mode='build';save();renderSetup();openStudio(r.seed)}}catch(e){snack('That match link could not be read')}}
+if(hm){try{const r=parseCode(hm[1]);if(r.type==='match'){CT.teams=[r.A,r.B];D.len=r.len;D.draft=null;D.mode='build';save();renderSetup();openStudio(r.seed)}}catch(e){snack('That match link could not be read')}}
 document.addEventListener('keydown',e=>{if(e.key==='Escape'){$('#sheet').hidden=true;$('#codeSheet').hidden=true}
   if(!$('#watch').hidden&&e.key===' '){e.preventDefault();$('#wPlay').click()}});
 document.addEventListener('visibilitychange',()=>{if(document.hidden&&!$('#watch').hidden&&V.playing)$('#wPlay').click()});
