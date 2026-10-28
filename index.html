@@ -303,6 +303,7 @@ section.block h3{font-size:26px;margin-bottom:10px}
   <div class="go-row">
     <span class="muted" style="font-size:14px">Full 90 minutes, about 2 min 40 s to watch at the default 3× speed.</span>
     <div class="tact">
+      <button class="cta ghost" id="vsCpu">Play Player 1 vs CPU · 3D</button>
       <button class="cta" id="toStudio">To the studio</button>
     </div>
   </div>
@@ -325,7 +326,7 @@ section.block h3{font-size:26px;margin-bottom:10px}
   <div class="readybar" id="rmReady"></div>
   <div class="startbox" id="rmStart" hidden>
     <div class="opt"><span class="eyebrow">Both phones watch the same game</span><h3>Simulation</h3><p>22 legends play it out in 3D with commentary and pundits. About 2 min 40 s at 3×; either of you can speed up or pause for both.</p><button class="cta" id="rmSim">Watch the simulation</button></div>
-    <div class="opt"><span class="eyebrow">You control your own team</span><h3>Play live</h3><p>Thumbstick and buttons on your own phone. Player 1's phone hosts the match, so keep it awake.</p><div class="seg" id="rmLen"></div><button class="cta" id="rmLive">Play live</button></div>
+    <div class="opt"><span class="eyebrow">You control your own team</span><h3>Play live</h3><p>Thumbstick and buttons on your own phone. Player 1's phone hosts the match, so keep it awake.</p><div class="seg" id="rmLen"></div><div><div class="eyebrow" style="margin-bottom:6px">Your view (each phone picks its own)</div><div class="seg" id="rmView"></div></div><button class="cta" id="rmLive">Play live</button></div>
   </div>
 </div></section>
 
@@ -419,6 +420,7 @@ section.block h3{font-size:26px;margin-bottom:10px}
 <script src="/sim.js"></script>
 <script src="/studio.js"></script>
 <script src="/live.js"></script>
+<script src="/broadcast.js"></script>
 <script>
 (function(){
 'use strict';
@@ -936,6 +938,8 @@ function renderRoom(opts){if(!RM)return;const r=RM.role,opp=r===0?1:0;
   $('#rmStart').hidden=!both;
   $('#rmLen').innerHTML=[2,3,5].map(n=>`<button class="chip${RM.liveLen===n?' on':''}" data-rlen="${n}">${n} min</button>`).join('');
   $$('#rmLen .chip').forEach(c=>c.onclick=()=>{RM.liveLen=+c.dataset.rlen;renderRoom()});
+  const vw=store.get('lxi.view','3d');$('#rmView').innerHTML=[['3d','Broadcast 3D'],['2d','Top-down 2D']].map(([k,l])=>`<button class="chip${vw===k?' on':''}" data-rview="${k}">${l}</button>`).join('');
+  $$('#rmView .chip').forEach(c=>c.onclick=()=>{store.set('lxi.view',c.dataset.rview);renderRoom()});
 }
 function beginMatch(d){if(!RM||RM.busy)return;RM.busy=true;
   if(d.mode==='sim'){openStudio(d.seed);ensureSim(()=>{});RM.goAt=d.at;tickCountdown()}
@@ -954,11 +958,14 @@ function startLiveMatch(d){
   if(typeof LIVE==='undefined'){snack('Live mode failed to load');RM.busy=false;return}
   if(RM.role>1){snack('The room is full. Two players are already in this match.');RM.busy=false;return}
   const [A,B]=readyTeams(),kits=kitPair(A,B);const role=RM.role;
-  setTimeout(()=>{LIVE.start({teams:[A,B],kits,role,host:role===0,net:RM.net,dur:d.dur||180,
+  setTimeout(()=>{LIVE.start({teams:[A,B],kits,role,host:role===0,net:RM.net,dur:d.dur||180,view:store.get('lxi.view','3d'),
     onResult:res=>{const h=hist();h.unshift({at:Date.now(),live:true,a:{mgr:A.mgr,name:A.name,g:res.score[0]},b:{mgr:B.mgr,name:B.name,g:res.score[1]}});store.set('lxi.duel.history',h.slice(0,200))},
     onExit:()=>backToRoom()})},Math.max(0,(d.at||0)-Date.now()));
   snack('Kick-off…')}
 $('#createRoom').onclick=()=>openRoom(newCode(),true);
+$('#vsCpu').onclick=()=>{if(typeof LIVE==='undefined'||typeof THREE==='undefined'){snack('3D failed to load. Check your connection.');return}
+  if(D.draft){snack('Finish the draft first');return}const [A,B]=readyTeams(),kits=kitPair(A,B);B.mgr='CPU';
+  const go=()=>LIVE.start({teams:[A,B],kits,role:0,host:true,net:null,cpu:1,cpuLv:{react:.45,tackle:.55,shoot:1,spd:.98},view:'3d',dur:240,exitLabel:'Back to teams',again:go,onExit:()=>{}});go()};
 $('#rmLeave').onclick=()=>leaveRoom(false);
 $('#rmCopy').onclick=()=>copy(roomLink());
 $('#rmShareBtn').onclick=async()=>{const url=roomLink();if(navigator.share){try{await navigator.share({title:'Legends XI',text:'Pick your XI and play me in Legends XI',url});return}catch(e){if(e&&e.name==='AbortError')return}}copy(url)};

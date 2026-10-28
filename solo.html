@@ -381,8 +381,8 @@ footer{padding-block:28px;color:var(--muted);font-size:13px;border-top:1px solid
       <div><div class="lbl">Difficulty</div><div class="seg" id="diffSeg"></div></div>
       <div><div class="lbl">Match length</div><div class="seg" id="lenSeg"></div></div>
     </div>
-    <button class="cta" id="kickoff" style="font-size:26px;padding:14px 34px">Kick off</button>
-    <p class="muted" style="font-size:14px;margin-top:14px;padding-bottom:40px">Best on a phone held sideways. The left half of the screen is your thumbstick; buttons sit bottom-right.</p>
+    <div style="display:flex;flex-wrap:wrap;gap:10px"><button class="cta" id="kickoff3d" style="font-size:26px;padding:14px 30px">Kick off · Broadcast 3D</button><button class="cta ghost" id="kickoff" style="font-size:22px;padding:14px 26px">Kick off · Classic 2D</button></div>
+    <p class="muted" style="font-size:14px;margin-top:14px;padding-bottom:40px">Broadcast 3D is the FIFA 12-style TV camera: hold your phone sideways, thumbstick on the left, SHOOT / PASS / SPRINT on the right (hold PASS for a through ball). Classic 2D is the top-down view.</p>
   </div>
 </section>
 </main>
@@ -420,7 +420,10 @@ footer{padding-block:28px;color:var(--muted);font-size:13px;border-top:1px solid
   <div id="mOverlay" hidden><div class="card" id="mCard"></div></div>
 </div>
 
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script src="/data.js"></script>
+<script src="/live.js"></script>
+<script src="/broadcast.js"></script>
 <script>
 (function(){
 'use strict';
@@ -531,6 +534,14 @@ $('#autoGun').onclick=()=>{squad.xi=autofill(squad.form,squad.xi,PL.filter(p=>p.
 $('#clearXi').onclick=()=>{squad.xi=Array(11).fill(null);save();renderAll()};
 document.addEventListener('keydown',e=>{if(e.key==='Escape'&&!$('#sheet').hidden)closePicker()});
 $('#kickoff').onclick=()=>startMatch();
+const CPU_LV={amateur:{react:.75,tackle:.35,shoot:.7,spd:.92},pro:{react:.45,tackle:.55,shoot:1,spd:.98},legend:{react:.28,tackle:.8,shoot:1.2,spd:1.04}};
+$('#kickoff3d').onclick=()=>{
+  if(typeof LIVE==='undefined'||typeof THREE==='undefined'||typeof BROADCAST==='undefined'){$('#kickoff3d').textContent='3D failed to load. Check your connection';return}
+  const o=OPPS.find(x=>x.id===settings.opp)||OPPS[0];
+  const A={name:'My XI',mgr:'You',form:squad.form,xi:autofill(squad.form,squad.xi,PL)},B={name:o.name,mgr:'CPU',form:o.form,xi:oppXI(o)};
+  const kits=[{id:'red',a:'#e3182c',b:'#ffffff',shorts:'#ffffff',socks:'#ffffff'},{id:o.id,a:o.kit,b:o.ring,shorts:o.ring,socks:o.kit}];
+  const go=()=>{if(o.id==='gala'){galaSeed=Math.random();B.xi=oppXI(o)}LIVE.start({teams:[A,B],kits,role:0,host:true,net:null,cpu:1,cpuLv:CPU_LV[settings.diff]||CPU_LV.pro,view:'3d',dur:settings.len*60,exitLabel:'Back to setup',again:go,onExit:()=>{}})};
+  go()};
 
 /* =================== MATCH ENGINE =================== */
 const W=68,L=105,GH=3.66,CX=34;
