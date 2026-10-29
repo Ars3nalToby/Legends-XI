@@ -123,6 +123,9 @@ const BROADCAST = (function () {
     const marker = new THREE.Mesh(new THREE.ConeGeometry(.4, .62, 3), new THREE.MeshBasicMaterial({ color: '#e3182c' })); marker.rotation.x = Math.PI; scene.add(marker);
     const markerEdge = new THREE.Mesh(new THREE.ConeGeometry(.4, .62, 3), new THREE.MeshBasicMaterial({ color: '#ffffff', wireframe: true })); markerEdge.rotation.x = Math.PI; markerEdge.scale.set(1, 1, 1); scene.add(markerEdge); markerEdge.renderOrder = -1;
     const foot = new THREE.Mesh(new THREE.RingGeometry(.62, .8, 32), new THREE.MeshBasicMaterial({ color: '#ffe14d', transparent: true, opacity: .9, depthWrite: false })); foot.rotation.x = -Math.PI / 2; foot.position.y = .035; scene.add(foot);
+    const arrowShape = new THREE.Shape(); arrowShape.moveTo(0, .62); arrowShape.lineTo(.42, .05); arrowShape.lineTo(.16, .12); arrowShape.lineTo(.16, -.38); arrowShape.lineTo(-.16, -.38); arrowShape.lineTo(-.16, .12); arrowShape.lineTo(-.42, .05); arrowShape.lineTo(0, .62);
+    const arrowG = new THREE.Group(); const arrowM = new THREE.Mesh(new THREE.ShapeGeometry(arrowShape), new THREE.MeshBasicMaterial({ color: '#ffe14d', transparent: true, opacity: .95, side: THREE.DoubleSide, depthWrite: false }));
+    arrowM.rotation.x = Math.PI / 2; arrowM.position.set(0, .04, 1.32); arrowG.add(arrowM); scene.add(arrowG);
     const recvRing = new THREE.Mesh(new THREE.RingGeometry(.7, .82, 32), new THREE.MeshBasicMaterial({ color: '#ffffff', transparent: true, opacity: .55, depthWrite: false })); recvRing.rotation.x = -Math.PI / 2; recvRing.position.y = .035; scene.add(recvRing);
     const oppMark = new THREE.Mesh(new THREE.RingGeometry(.62, .74, 32), new THREE.MeshBasicMaterial({ color: '#ffffff', transparent: true, opacity: .35, depthWrite: false })); oppMark.rotation.x = -Math.PI / 2; oppMark.position.y = .034; scene.add(oppMark);
 
@@ -132,6 +135,9 @@ const BROADCAST = (function () {
     function resize() { const r = container.getBoundingClientRect(); renderer.setSize(r.width, r.height, false); aspect = r.width / Math.max(1, r.height); camera.aspect = aspect; camera.fov = aspect < 1 ? 58 : aspect < 1.5 ? 42 : 34; camera.updateProjectionMatrix(); }
     resize();
 
+    const ZOOMS = [{ h: 12, d: 21, n: 'Close' }, { h: 17, d: 30, n: 'Wide' }, { h: 23, d: 40, n: 'Extra wide' }];
+    let zi = 1; try { const v = +localStorage.getItem('lxi.camzoom'); if (v >= 0 && v < ZOOMS.length) zi = v; } catch (e) { }
+    function cycleZoom() { zi = (zi + 1) % ZOOMS.length; try { localStorage.setItem('lxi.camzoom', zi); } catch (e) { } return ZOOMS[zi].n; }
     let t0 = 0;
     function render(sn, dt) {
       t0 += dt; const Pp = sn.p, me = sn.a[role], them = sn.a[1 - role];
@@ -148,14 +154,14 @@ const BROADCAST = (function () {
       if (dt > 0 && ball.userData.px !== undefined) { const dX = bX - ball.userData.px, dZ = bZ - ball.userData.pz; ball.rotation.z -= dX / .2; ball.rotation.x += dZ / .2; }
       ball.userData.px = bX; ball.userData.pz = bZ;
       ball.position.set(bX, .2 + bz, bZ); bshadow.position.set(bX + bz * .25, .025, bZ + bz * .25); bshadow.scale.setScalar(1 / (1 + bz * .25));
-      if (me >= 0) { const g = rigs[me].grp.position, bob = Math.sin(t0 * 5) * .08; marker.visible = markerEdge.visible = foot.visible = true; marker.position.set(g.x, 2.45 + bob, g.z); markerEdge.position.set(g.x, 2.43 + bob, g.z); marker.rotation.y = markerEdge.rotation.y = t0 * 1.6; foot.position.set(g.x, .035, g.z); }
-      else marker.visible = markerEdge.visible = foot.visible = false;
+      if (me >= 0) { const g = rigs[me].grp.position, bob = Math.sin(t0 * 5) * .08; marker.visible = markerEdge.visible = foot.visible = arrowG.visible = true; arrowG.position.set(g.x, 0, g.z); arrowG.rotation.y = rigs[me].grp.rotation.y; arrowM.position.z = 1.32 + Math.sin(t0 * 6) * .07; marker.position.set(g.x, 2.45 + bob, g.z); markerEdge.position.set(g.x, 2.43 + bob, g.z); marker.rotation.y = markerEdge.rotation.y = t0 * 1.6; foot.position.set(g.x, .035, g.z); }
+      else marker.visible = markerEdge.visible = foot.visible = arrowG.visible = false;
       if (them >= 0) { const g = rigs[them].grp.position; oppMark.visible = true; oppMark.position.set(g.x, .034, g.z); } else oppMark.visible = false;
       if (sn.r >= 0 && sn.r !== me) { const g = rigs[sn.r].grp.position; recvRing.visible = true; recvRing.position.set(g.x, .035, g.z); recvRing.scale.setScalar(1 + Math.sin(t0 * 8) * .08); } else recvRing.visible = false;
       // broadcast camera: follow the ball along the touchline, lean ahead of the ball carrier
       let lead = 0; if (sn.o >= 0) lead = (sn.o < 11 ? 1 : -1) * 5;
-      const tx = Math.max(-L / 2 + 10, Math.min(L / 2 - 10, bX + lead)), tz = bZ * .6;
-      const portrait = aspect < 1, h = portrait ? 30 : 11.5, dist = portrait ? 36 : 20;
+      const edge = 6 + zi * 4, tx = Math.max(-L / 2 + edge, Math.min(L / 2 - edge, bX + lead)), tz = bZ * .6;
+      const portrait = aspect < 1, Z0 = ZOOMS[zi], h = portrait ? Z0.h * 1.8 : Z0.h, dist = portrait ? Z0.d * 1.35 : Z0.d;
       camT.set(tx, 0, tz);
       const desired = new THREE.Vector3(tx, h, tz * .35 + side * (W / 2 * .35 + dist));
       const kk = first ? 1 : 1 - Math.exp(-dt * 2.6); camP.lerp(desired, kk); look.lerp(camT, first ? 1 : 1 - Math.exp(-dt * 3.6)); first = false;
@@ -165,7 +171,7 @@ const BROADCAST = (function () {
     // stick on screen -> sim direction. Screen right = my attacking direction (sim +y for Player 1, -y for Player 2); screen up = away from the camera.
     function dirFromStick(jx, jy) { return role === 0 ? [jy, jx] : [-jy, -jx]; }
     function dispose() { try { renderer.dispose(); } catch (e) { } cv.remove(); }
-    return { render, resize, dispose, dirFromStick };
+    return { render, resize, dispose, dirFromStick, cycleZoom, zoomName: () => ZOOMS[zi].n };
   }
   return { create };
 })();
