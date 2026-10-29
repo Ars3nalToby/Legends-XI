@@ -1,0 +1,22 @@
+{
+  "checked": "2026-10-29",
+  "note": "Edit this file to update the hub. 'utc' is the kick-off in UTC (UK is on GMT from 25 Oct 2026, so UK time = UTC until the clocks go forward in March). status: 'confirmed' = time and broadcaster listed as confirmed; 'listed' = time listed, broadcaster still TBC. Broadcast picks can move kick-offs, so re-check before travelling or setting alarms.",
+  "sources": [
+    {"label": "live-footballontv.com", "url": "https://www.live-footballontv.com/arsenal-on-tv.html"},
+    {"label": "The False 9", "url": "https://thefalse9.com/2026/10/liverpool-vs-arsenal-tv-channel.html"}
+  ],
+  "fixtures": [
+    {"utc": "2026-11-01T16:30:00Z", "comp": "Premier League", "opp": "Liverpool", "venue": "A", "status": "confirmed"},
+    {"utc": "2026-11-04T20:00:00Z", "comp": "Champions League", "opp": "Slavia Prague", "venue": "A", "status": "confirmed"},
+    {"utc": "2026-11-21T17:30:00Z", "comp": "Premier League", "opp": "Newcastle United", "venue": "A", "status": "confirmed"},
+    {"utc": "2026-11-24T20:00:00Z", "comp": "Champions League", "opp": "Borussia Dortmund", "venue": "H", "status": "confirmed"},
+    {"utc": "2026-11-29T16:30:00Z", "comp": "Premier League", "opp": "Manchester City", "venue": "H", "status": "confirmed"},
+    {"utc": "2026-12-02T20:15:00Z", "comp": "Premier League", "opp": "Brentford", "venue": "A", "status": "listed"},
+    {"utc": "2026-12-06T16:30:00Z", "comp": "Premier League", "opp": "Tottenham Hotspur", "venue": "A", "status": "confirmed"},
+    {"utc": "2026-12-09T20:00:00Z", "comp": "Champions League", "opp": "Real Madrid", "venue": "H", "status": "listed"},
+    {"utc": "2026-12-13T14:00:00Z", "comp": "Premier League", "opp": "AFC Bournemouth", "venue": "H", "status": "listed"},
+    {"utc": "2026-12-20T16:30:00Z", "comp": "Premier League", "opp": "Manchester United", "venue": "H", "status": "confirmed"},
+    {"utc": "2026-12-27T19:00:00Z", "comp": "Premier League", "opp": "Crystal Palace", "venue": "A", "status": "confirmed"},
+    {"utc": "2026-12-30T19:30:00Z", "comp": "Premier League", "opp": "Fulham", "venue": "A", "status": "confirmed"}
+  ]
+}

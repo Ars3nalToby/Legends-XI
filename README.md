@@ -9,3 +9,7 @@ Two-player football legends game.
 - `data.js` players · `sim.js` seeded match engine · `studio.js` commentary/pundits · `live.js` live two-player engine (host-authoritative)
 
 Online rooms use Supabase Realtime broadcast + presence only (no tables).
+
+- `/hub.html` Matchday Hub for thenonnegotiablog.com: next Arsenal match in Brisbane time with countdown and .ics calendar download, Legend of the Week, Weekly Dream XI challenge (reads your saved XI)
+- `fixtures.json` hub fixtures: edit kick-off times here (UTC) when they move
+- `og.png` link-preview image

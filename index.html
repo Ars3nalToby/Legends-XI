@@ -7,6 +7,11 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <title>Legends XI</title>
+<meta name="description" content="Legends XI: build a Dream XI of football legends and play a friend head-to-head. Part of The Non-Negotiables, Arsenal from Brisbane.">
+<meta property="og:title" content="Legends XI">
+<meta property="og:description" content="Build your Dream XI of 1990s-2020s legends and play a friend head-to-head on your phones.">
+<meta property="og:image" content="https://legends.thenonnegotiablog.com/og.png">
+<meta name="twitter:card" content="summary_large_image">
 <link rel="manifest" href="/manifest.json">
 <link rel="apple-touch-icon" href="/icon-192.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -258,6 +263,7 @@ section.block h3{font-size:26px;margin-bottom:10px}
   <a class="brand" href="/"><i></i>LEGENDS XI</a>
   <a class="tab on" href="/">H2H</a>
   <a class="tab" href="/solo.html">Solo</a>
+  <a class="tab" href="/hub.html">Hub</a>
 </div></nav>
 
 <main>
@@ -905,7 +911,9 @@ function roomPresence(list){if(!RM)return;const others=list.filter(p=>p&&p.id!==
   if(prev[0]!==RM.here[0]||prev[1]!==RM.here[1]||RM._rr!==RM.role){RM._rr=RM.role;renderRoom({mine:RM._mineDrawn?false:undefined});RM._mineDrawn=true}}
 function roomMsg(t,d){if(!RM)return;
   if(t==='hello'){sendTeam(true);return}
-  if(t==='team'){if(d.role===RM.role||d.role<0||d.role>1)return;RM.teams[d.role]=d.team;RM.ready[d.role]=!!d.ready;RM.here[d.role]=true;
+  if(t==='team'){if(!d||d.role===RM.role||(d.role!==0&&d.role!==1))return;
+    let clean;try{clean=unpackT(packT(d.team))}catch(e){return}  /* never trust the wire: same validation as pasted codes */
+    d.team=clean;RM.teams[d.role]=d.team;RM.ready[d.role]=!!d.ready;RM.here[d.role]=true;
     let lostMine=false;if(RM.role===1&&d.role===0){const mine=RM.teams[1];const theirs=new Set(d.team.xi);const lost=mine.xi.filter(x=>x!=null&&theirs.has(x));if(lost.length){mine.xi=mine.xi.map(x=>theirs.has(x)?null:x);lostMine=true;RM.ready[1]=false;roomPersist();sendTeam();snack(lost.map(x=>PL[x].short).join(', ')+' already picked by '+d.team.mgr)}}
     if(!$('#sheet').hidden)renderPicker();renderRoom(lostMine?undefined:{mine:false});return}
   if(t==='start'){beginMatch(d);return}

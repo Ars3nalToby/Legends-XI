@@ -1,0 +1,310 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#0a1420">
+<title>Matchday Hub · Legends XI · The Non-Negotiables</title>
+<meta name="description" content="Arsenal kick-off times in Brisbane, a legend of the week and a weekly Dream XI challenge. Part of The Non-Negotiables, built by a Gunner 16,000km from N5.">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="The Non-Negotiables">
+<meta property="og:title" content="Matchday Hub · Legends XI">
+<meta property="og:description" content="Arsenal kick-off times in Brisbane, a legend of the week and a weekly Dream XI challenge.">
+<meta property="og:image" content="https://legends.thenonnegotiablog.com/og.png">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="manifest" href="/manifest.json">
+<link rel="apple-touch-icon" href="/icon-192.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600;700&family=Saira+Extra+Condensed:wght@600;700;800&display=swap">
+<style>
+:root{
+  --bg:#0a1420; --surf:#101d2d; --surf2:#162639; --line:#243a52;
+  --fg:#eef3f8; --muted:#8fa3b8; --red:#e3182c; --brass:#d8b462;
+  --ok:#52d37f; --warn:#f2b63d; --bad:#ef5a55;
+  --display:'Saira Extra Condensed','Arial Narrow',Impact,sans-serif;
+  --body:'Barlow',system-ui,-apple-system,'Segoe UI',sans-serif;
+  color-scheme:dark;
+}
+@media (prefers-color-scheme:light){:root:not([data-theme="dark"]){
+  --bg:#f5f1e8; --surf:#ffffff; --surf2:#efe9da; --line:#d9d0bb;
+  --fg:#121c28; --muted:#5d6b7a; --brass:#8a6a1c; --ok:#17803f; --warn:#996a00; --bad:#c0332f; color-scheme:light}}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+html,body{background:var(--bg);color:var(--fg);margin:0}
+body{font-family:var(--body);font-size:16px;line-height:1.5;-webkit-tap-highlight-color:transparent;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+a{color:inherit}
+button{font:inherit;color:inherit;cursor:pointer}
+a:focus-visible,button:focus-visible{outline:2px solid var(--brass);outline-offset:2px}
+.wrap{max-width:980px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+h1,h2,h3{font-family:var(--display);font-weight:800;line-height:.95;text-transform:uppercase;letter-spacing:.01em;margin:0;text-wrap:balance}
+.eyebrow{font-family:var(--display);font-weight:700;text-transform:uppercase;letter-spacing:.14em;font-size:13px;color:var(--brass)}
+.muted{color:var(--muted)}
+.nav{position:sticky;top:0;z-index:20;background:color-mix(in srgb,var(--bg) 90%,transparent);backdrop-filter:blur(8px);border-bottom:1px solid var(--line)}
+.nav .wrap{display:flex;align-items:center;gap:14px;padding-block:10px;overflow-x:auto;scrollbar-width:none}
+.nav .wrap::-webkit-scrollbar{display:none}
+.brand{font-family:var(--display);font-weight:800;text-transform:uppercase;letter-spacing:.06em;font-size:18px;text-decoration:none;white-space:nowrap}
+.brand b{color:var(--red)}
+.nav a.l{font-family:var(--display);font-weight:700;letter-spacing:.1em;text-transform:uppercase;font-size:14px;color:var(--muted);text-decoration:none;white-space:nowrap}
+.nav a.l.on,.nav a.l:hover{color:var(--fg)}
+section{padding-block:30px;border-bottom:1px solid var(--line)}
+section h2{font-size:clamp(30px,6vw,44px);margin:6px 0 14px}
+.card{background:var(--surf);border:1px solid var(--line);border-radius:10px;padding:18px}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:44px;padding:10px 18px;border-radius:8px;border:1px solid var(--line);background:var(--surf2);font-family:var(--display);font-weight:700;letter-spacing:.1em;text-transform:uppercase;font-size:16px;text-decoration:none;color:var(--fg)}
+.btn.red{background:var(--red);border-color:var(--red);color:#fff}
+.btn.sm{min-height:36px;padding:6px 12px;font-size:14px}
+.row{display:flex;flex-wrap:wrap;gap:10px;align-items:center}
+.pill{display:inline-flex;align-items:center;gap:6px;font-size:13px;font-weight:600;padding:3px 10px;border-radius:99px;border:1px solid var(--line);color:var(--muted)}
+.pill.ok{color:var(--ok);border-color:color-mix(in srgb,var(--ok) 50%,transparent)}
+.pill.warn{color:var(--warn);border-color:color-mix(in srgb,var(--warn) 50%,transparent)}
+.pill.bad{color:var(--bad);border-color:color-mix(in srgb,var(--bad) 50%,transparent)}
+/* next match */
+.next{display:grid;gap:16px}
+.vs{font-family:var(--display);font-weight:800;text-transform:uppercase;font-size:clamp(40px,10vw,76px);line-height:.9}
+.vs small{display:block;font-size:.34em;letter-spacing:.14em;color:var(--brass);margin-bottom:6px}
+.times{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.times>div{background:var(--surf2);border-radius:8px;padding:12px}
+.times b{display:block;font-family:var(--display);font-size:clamp(26px,6vw,36px);line-height:1;margin-top:2px}
+.times .bne{border:1px solid var(--red)}
+.count{font-family:var(--display);font-weight:800;font-size:clamp(34px,8vw,54px);letter-spacing:.04em;font-variant-numeric:tabular-nums}
+/* fixture list */
+.fx{list-style:none;margin:0;padding:0;display:grid;gap:8px}
+.fx li{display:grid;grid-template-columns:1fr auto;gap:4px 12px;align-items:center;background:var(--surf);border:1px solid var(--line);border-radius:8px;padding:12px 14px}
+.fx .opp{font-weight:700}
+.fx .bt{font-family:var(--display);font-weight:700;font-size:20px;text-align:right}
+.fx .sub{grid-column:1/-1;display:flex;flex-wrap:wrap;gap:8px;align-items:center;color:var(--muted);font-size:14px}
+/* legend */
+.legend{display:grid;gap:16px;grid-template-columns:auto 1fr;align-items:center}
+.ovr{font-family:var(--display);font-weight:800;font-size:76px;line-height:.85;color:var(--brass)}
+.ovr small{display:block;font-size:14px;letter-spacing:.14em;color:var(--muted)}
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-top:12px}
+.stats div{background:var(--surf2);border-radius:6px;padding:8px;text-align:center}
+.stats b{display:block;font-family:var(--display);font-size:24px;line-height:1}
+.stats span{font-size:11px;letter-spacing:.14em;color:var(--muted)}
+/* challenge */
+.rule{font-family:var(--display);font-weight:800;text-transform:uppercase;font-size:clamp(28px,6vw,40px);line-height:1}
+.chk{list-style:none;padding:0;margin:12px 0;display:grid;gap:6px}
+.chk li{display:flex;gap:10px;align-items:flex-start}
+.chk i{font-style:normal;font-weight:800;width:22px;flex:none}
+.chk .y i{color:var(--ok)} .chk .n i{color:var(--bad)}
+.xi{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:6px;margin:12px 0;padding:0;list-style:none}
+.xi li{background:var(--surf2);border-radius:6px;padding:6px 10px;font-size:14px;display:flex;justify-content:space-between;gap:6px}
+.xi li.bad{outline:1px solid var(--bad)}
+.xi li span{color:var(--muted)}
+.score{font-family:var(--display);font-weight:800;font-size:44px;line-height:1}
+footer{padding-block:30px;color:var(--muted);font-size:14px}
+.toast{position:fixed;left:50%;bottom:calc(20px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--fg);color:var(--bg);padding:10px 16px;border-radius:99px;font-weight:600;z-index:50;max-width:90vw}
+@media (min-width:760px){.next{grid-template-columns:1.2fr 1fr;align-items:start}}
+</style>
+</head>
+<body>
+<nav class="nav"><div class="wrap">
+  <a class="brand" href="https://thenonnegotiablog.com" rel="noopener">The <b>Non-Negotiables</b></a>
+  <a class="l on" href="/hub.html">Hub</a>
+  <a class="l" href="/">Head-to-Head</a>
+  <a class="l" href="/solo.html">XI builder</a>
+  <a class="l" href="https://thenonnegotiablog.com/timetable.html" rel="noopener">EPL timetable</a>
+  <a class="l" href="https://thenonnegotiablog.com/factory.html" rel="noopener">Factory</a>
+</div></nav>
+
+<main class="wrap">
+  <section id="next" aria-labelledby="nextH">
+    <div class="eyebrow">Brisbane matchday</div>
+    <h2 id="nextH">Next up</h2>
+    <div class="card next" id="nextCard"><p class="muted">Loading fixtures…</p></div>
+  </section>
+
+  <section id="soon" aria-labelledby="soonH">
+    <div class="eyebrow">Set your alarms</div>
+    <h2 id="soonH">The next few games</h2>
+    <ul class="fx" id="fxList"></ul>
+    <p class="muted" id="fxNote" style="font-size:14px;margin-top:14px"></p>
+  </section>
+
+  <section id="legend" aria-labelledby="legH">
+    <div class="eyebrow" id="legWk">Legend of the week</div>
+    <h2 id="legH">Gunner to put in your XI</h2>
+    <div class="card" id="legCard"></div>
+  </section>
+
+  <section id="challenge" aria-labelledby="chH">
+    <div class="eyebrow" id="chWk">Weekly challenge</div>
+    <h2 id="chH">This week's Dream XI rule</h2>
+    <div class="card" id="chCard"></div>
+  </section>
+</main>
+
+<footer class="wrap">
+  Unofficial fan project. No club marks, crests or photography. Kick-off times come from public UK broadcast listings and can move, so check the <a href="https://thenonnegotiablog.com/timetable.html" rel="noopener">EPL timetable</a> before you set an alarm. Built by a Gunner 16,000km from N5.
+</footer>
+
+<script src="data.js"></script>
+<script>
+(function(){
+'use strict';
+const $=s=>document.querySelector(s);
+const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const store={get(k,d){try{const v=localStorage.getItem(k);return v?JSON.parse(v):d}catch(e){return d}},set(k,v){try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}}};
+const BNE='Australia/Brisbane', LDN='Europe/London';
+function toast(m){const t=document.createElement('div');t.className='toast';t.setAttribute('role','status');t.textContent=m;document.body.appendChild(t);setTimeout(()=>t.remove(),2200)}
+const fmt=(d,tz,o)=>new Intl.DateTimeFormat('en-AU',Object.assign({timeZone:tz,hour12:false},o)).format(d);
+const wd=(d,tz)=>fmt(d,tz,{weekday:'short',day:'numeric',month:'short'});
+const hm=(d,tz)=>fmt(d,tz,{hour:'2-digit',minute:'2-digit'});
+
+/* ============ FIXTURES ============ */
+let FX=null;
+const venueWord=f=>f.venue==='H'?'v':'at';
+const label=f=>`Arsenal ${venueWord(f)} ${f.opp}`;
+function icsEsc(s){return String(s).replace(/\\/g,'\\\\').replace(/;/g,'\\;').replace(/,/g,'\\,').replace(/\n/g,'\\n')}
+function icsStamp(d){return d.toISOString().replace(/[-:]/g,'').replace(/\.\d{3}/,'')}
+function downloadIcs(f){
+  const s=new Date(f.utc),e=new Date(s.getTime()+2*3600e3);
+  const lines=['BEGIN:VCALENDAR','VERSION:2.0','PRODID:-//The Non-Negotiables//Legends XI Hub//EN','CALSCALE:GREGORIAN','BEGIN:VEVENT',
+    'UID:'+icsStamp(s)+'-'+f.opp.replace(/\W/g,'').toLowerCase()+'@thenonnegotiablog.com','DTSTAMP:'+icsStamp(new Date()),'DTSTART:'+icsStamp(s),'DTEND:'+icsStamp(e),
+    'SUMMARY:'+icsEsc(label(f)+' ('+f.comp+')'),
+    'DESCRIPTION:'+icsEsc('UK kick-off '+hm(s,LDN)+' ('+wd(s,LDN)+'). '+(f.status==='confirmed'?'Time confirmed in UK listings.':'Time listed, broadcaster still TBC.')+' Times can move, check the EPL timetable at thenonnegotiablog.com.'),
+    'BEGIN:VALARM','ACTION:DISPLAY','DESCRIPTION:Kick-off in 30 minutes','TRIGGER:-PT30M','END:VALARM','END:VEVENT','END:VCALENDAR'];
+  const blob=new Blob([lines.join('\r\n')],{type:'text/calendar;charset=utf-8'});
+  const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='arsenal-'+f.opp.replace(/\W/g,'-').toLowerCase()+'.ics';
+  document.body.appendChild(a);a.click();setTimeout(()=>{a.remove();URL.revokeObjectURL(a.href)},500);toast('Calendar file ready')}
+
+function untilText(ms){
+  if(ms<=0)return null;
+  const s=Math.floor(ms/1000),d=Math.floor(s/86400),h=Math.floor(s%86400/3600),m=Math.floor(s%3600/60),sec=s%60;
+  const p=n=>String(n).padStart(2,'0');
+  return d>0?`${d}d ${p(h)}h ${p(m)}m ${p(sec)}s`:`${p(h)}h ${p(m)}m ${p(sec)}s`}
+function statusPill(f){return f.status==='confirmed'?'<span class="pill ok">Time confirmed</span>':'<span class="pill warn">Time listed, TBC</span>'}
+
+function renderFixtures(){
+  const now=Date.now();
+  const list=FX.fixtures.filter(f=>new Date(f.utc).getTime()+2.5*3600e3>now);
+  if(!list.length){$('#nextCard').innerHTML='<p class="muted">No fixtures loaded right now. Check the <a href="https://thenonnegotiablog.com/timetable.html" rel="noopener">EPL timetable</a>.</p>';$('#fxList').innerHTML='';return}
+  const f=list[0],s=new Date(f.utc);
+  const wake=new Date(s.getTime()-30*60e3);
+  $('#nextCard').innerHTML=`
+    <div>
+      <div class="vs"><small>${esc(f.comp)} · ${f.venue==='H'?'Home':'Away'}</small>Arsenal<br>${venueWord(f)} ${esc(f.opp)}</div>
+      <div class="row" style="margin-top:12px">${statusPill(f)}</div>
+    </div>
+    <div style="display:grid;gap:12px">
+      <div class="times">
+        <div class="bne"><span class="eyebrow">Brisbane</span><b>${hm(s,BNE)}</b><span class="muted">${esc(wd(s,BNE))}</span></div>
+        <div><span class="eyebrow">London</span><b>${hm(s,LDN)}</b><span class="muted">${esc(wd(s,LDN))}</span></div>
+      </div>
+      <div><span class="eyebrow">Kick-off in</span><div class="count" id="cd" aria-live="off"></div>
+        <div class="muted" style="font-size:14px">Alarm suggestion: ${hm(wake,BNE)} Brisbane time, ${esc(wd(wake,BNE))}</div></div>
+      <div class="row"><button class="btn red" id="ics">Add to calendar</button><a class="btn" href="/">Pick your XI to face them</a></div>
+    </div>`;
+  $('#ics').onclick=()=>downloadIcs(f);
+  const cd=$('#cd');
+  clearInterval(renderFixtures.t);
+  const tick=()=>{const left=s.getTime()-Date.now();const t=untilText(left);cd.textContent=t||(left>-2*3600e3?'In play':'Full time')};
+  tick();renderFixtures.t=setInterval(tick,1000);
+  $('#fxList').innerHTML=list.slice(1,7).map((g,i)=>{const gs=new Date(g.utc);return `<li>
+    <span class="opp">${esc(label(g))}</span><span class="bt">${hm(gs,BNE)} <small class="muted" style="font-size:13px">${esc(wd(gs,BNE))}</small></span>
+    <span class="sub">${esc(g.comp)} ${statusPill(g)} <span>London ${hm(gs,LDN)}</span> <button class="btn sm" data-i="${i+1}">Calendar</button></span></li>`}).join('');
+  document.querySelectorAll('#fxList button[data-i]').forEach(b=>b.onclick=()=>downloadIcs(list[+b.dataset.i]));
+  $('#fxNote').textContent='Fixtures last checked '+FX.checked+'. All times shown in Brisbane time (no daylight saving). Broadcast picks can move kick-offs.';
+}
+
+/* ============ WEEK MATHS ============ */
+function brisbaneNow(){return new Date(Date.now()+10*3600e3)} // read with getUTC*
+function isoWeek(d){ // d: Date whose UTC fields are the local calendar date
+  const t=new Date(Date.UTC(d.getUTCFullYear(),d.getUTCMonth(),d.getUTCDate()));
+  const day=t.getUTCDay()||7;t.setUTCDate(t.getUTCDate()+4-day);
+  const y=t.getUTCFullYear(),w=Math.ceil(((t-Date.UTC(y,0,1))/86400000+1)/7);return {y,w}}
+const WK=(()=>{const {y,w}=isoWeek(brisbaneNow());return {y,w,k:y*53+w}})();
+
+/* ============ LEGEND OF THE WEEK ============ */
+const NOTES={ /* Write your own line here, keyed by exact player name, e.g. 'Dennis Bergkamp':'Your irreverent one-liner.' */ };
+function mulberry(a){return function(){a|=0;a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296}}
+function legendOfWeek(){
+  const pool=PL.filter(p=>p.ars).sort((a,b)=>a.id-b.id);
+  const rnd=mulberry(7919),order=pool.map((_,i)=>i);for(let i=order.length-1;i>0;i--){const j=Math.floor(rnd()*(i+1));[order[i],order[j]]=[order[j],order[i]]}
+  return pool[order[WK.k%pool.length]]}
+function renderLegend(){
+  const p=legendOfWeek(),lbl=statLbl(p);
+  $('#legWk').textContent='Legend of the week · Week '+WK.w;
+  $('#legCard').innerHTML=`<div class="legend"><div class="ovr">${p.ovr}<small>OVR</small></div>
+    <div><h3 style="font-size:clamp(30px,7vw,46px)">${esc(p.name)}</h3>
+    <div class="muted">${esc(p.pos)} · ${esc(p.nat)} · ${esc(eraLabel(p))} · Arsenal</div>
+    ${NOTES[p.name]?`<p style="margin:10px 0 0">${esc(NOTES[p.name])}</p>`:''}</div></div>
+    <div class="stats">${p.s.map((v,i)=>`<div><b>${v}</b><span>${lbl[i]}</span></div>`).join('')}</div>
+    <div class="row" style="margin-top:14px"><a class="btn red" href="/solo.html">Put him in my XI</a>
+    <span class="muted" style="font-size:14px">${new Set(PL.filter(x=>x.ars).map(x=>x.id)).size} Gunners in the game, one new face every week.</span></div>`}
+
+/* ============ WEEKLY CHALLENGE ============ */
+const DECS=['90','00','10'];
+const decName=d=>"the '"+d+'s';
+const RULES=[
+  {id:'gunners',  title:()=>'Gunners only',            text:()=>'All 11 players must have worn the Arsenal shirt.', test:(ps)=>ps.every(p=>p.ars), pick:()=>p=>p.ars},
+  {id:'decade',   title:(k)=>'Pure '+decName(DECS[k.d]),text:(k)=>'Every player must have played in '+decName(DECS[k.d])+'.',test:(ps,k)=>ps.every(p=>p.dec.includes(DECS[k.d])),pick:(k)=>p=>p.dec.includes(DECS[k.d])},
+  {id:'nation',   title:()=>'United Nations',          text:()=>'No more than 2 players from the same country.',     test:(ps)=>maxCount(ps.map(p=>p.nat))<=2, pick:()=>(p,ps)=>ps.filter(x=>x.nat===p.nat).length<2},
+  {id:'noeng',    title:()=>'No Englishmen',           text:()=>'Nobody from England. Pick a rival nation to hate-watch.',test:(ps)=>ps.every(p=>p.nat!=='ENG'),pick:()=>p=>p.nat!=='ENG'},
+  {id:'underdog', title:()=>'Underdog XI',             text:()=>'Team OVR of 87 or lower. Chemistry is your superpower.',test:(ps,k,st)=>st.ovr<=87,pick:()=>p=>p.ovr<=87},
+  {id:'gunners6', title:()=>'Six and Six',             text:()=>'At least 6 Gunners and at least 4 players who never played for Arsenal.',test:(ps)=>ps.filter(p=>p.ars).length>=6&&ps.filter(p=>!p.ars).length>=4,pick:()=>(p,ps,n)=>{const a=ps.filter(x=>x.ars).length,o=ps.length-a;return p.ars?a<7:o<5}}
+];
+function maxCount(a){const m={};let b=0;a.forEach(x=>{m[x]=(m[x]||0)+1;if(m[x]>b)b=m[x]});return b}
+const FKEYS=Object.keys(FORMS);
+function challengeOf(k){
+  const ri=k%RULES.length,round=Math.floor(k/RULES.length);
+  return {rule:RULES[ri],k:{d:round%DECS.length},form:FKEYS[(k+round)%FKEYS.length]}}
+const CH0=challengeOf(WK.k);
+function evalXI(sq,CH=window.__ch||CH0){
+  const ids=sq.xi.map(x=>x!=null&&PL[x]?x:null),ps=ids.filter(x=>x!=null).map(x=>PL[x]);
+  const st=teamStats(sq.form,ids),checks=[];
+  checks.push({ok:sq.form===CH.form,text:'Formation locked to '+CH.form+(sq.form===CH.form?'':' (yours is '+sq.form+')')});
+  checks.push({ok:ps.length===11,text:'Full XI picked ('+ps.length+'/11)'});
+  checks.push({ok:ps.length>0&&CH.rule.test(ps,CH.k,st),text:CH.rule.text(CH.k)});
+  const slots=FORMS[sq.form];
+  const bad=ids.map((x,i)=>x!=null&&fit(PL[x],slots[i][0])==='off');
+  return {ids,ps,st,checks,pass:checks.every(c=>c.ok),score:st.ovr*10+st.chem,bad,slots}}
+function loadSquad(){
+  const s=store.get('lxi.squad',null);
+  if(s&&FORMS[s.form]&&Array.isArray(s.xi)&&s.xi.length===11)return {form:s.form,xi:s.xi.slice()};
+  const h=store.get('lxi.h2h',null);
+  if(h&&Array.isArray(h.teams)&&h.teams[0]&&FORMS[h.teams[0].form]&&Array.isArray(h.teams[0].xi)&&h.teams[0].xi.length===11)return {form:h.teams[0].form,xi:h.teams[0].xi.slice()};
+  return null}
+function autoBuild(CH=CH0){ // greedy: best legal player for each slot, GK first
+  const form=CH.form,slots=FORMS[form],out=Array(11).fill(null),picked=[];
+  const ok=CH.rule.pick(CH.k);
+  const order=[...slots.keys()].sort((a,b)=>(slots[a][0]==='GK'?-1:0)-(slots[b][0]==='GK'?-1:0));
+  for(const i of order){
+    let best=null,bs=-1;
+    for(const p of PL){if(out.includes(p.id))continue;if(!ok(p,picked,i))continue;
+      const f=fit(p,slots[i][0]);if(f==='off')continue;
+      const v=effOvr(p,slots[i][0])+(f==='nat'?.5:0)+(CH.rule.id==='gunners6'&&p.ars?.2:0);
+      if(v>bs){bs=v;best=p}}
+    if(!best){for(const p of PL){if(out.includes(p.id)||!ok(p,picked,i))continue;const v=effOvr(p,slots[i][0]);if(v>bs){bs=v;best=p}}}
+    if(best){out[i]=best.id;picked.push(best)}}
+  return {form,xi:out}}
+function shareText(r){const CH=CH0;
+  return `Legends XI weekly challenge · Week ${WK.w}\n${CH.rule.title(CH.k)} · ${CH.form}\n${r.pass?'PASSED':'Not yet'} · OVR ${r.st.ovr} · Chem ${r.st.chem} · Score ${r.score}\nBeat it: ${location.origin}/hub.html`}
+function renderChallenge(){const CH=CH0;
+  $('#chWk').textContent='Weekly challenge · Week '+WK.w;
+  const sq=loadSquad();
+  let body=`<div class="rule">${esc(CH.rule.title(CH.k))}</div><p style="margin:8px 0 0">${esc(CH.rule.text(CH.k))} Formation locked to <b>${esc(CH.form)}</b>. Highest score wins bragging rights: team OVR x10 plus chemistry.</p>`;
+  if(!sq){
+    body+=`<p class="muted">You haven't saved an XI on this device yet. Let me build a legal one, then tweak it in the builder.</p>`;
+  }else{
+    const r=evalXI(sq);
+    body+=`<ul class="chk">${r.checks.map(c=>`<li class="${c.ok?'y':'n'}"><i>${c.ok?'✓':'✗'}</i><span>${esc(c.text)}</span></li>`).join('')}</ul>
+    <ul class="xi">${r.ids.map((x,i)=>`<li class="${r.bad[i]?'bad':''}"><b>${x!=null?esc(PL[x].short):'—'}</b><span>${r.slots[i][0]}</span></li>`).join('')}</ul>
+    <div class="row"><div class="score">${r.score}</div><span class="muted">OVR ${r.st.ovr} · Chem ${r.st.chem}</span><span class="pill ${r.pass?'ok':'bad'}">${r.pass?'Challenge passed':'Not passing yet'}</span></div>`;
+    window.__lastResult=r;
+  }
+  body+=`<div class="row" style="margin-top:14px"><button class="btn red" id="chAuto">Build me a legal XI</button><a class="btn" href="/solo.html">Edit in the builder</a>${sq?'<button class="btn" id="chShare">Copy my result</button>':''}</div>`;
+  $('#chCard').innerHTML=body;
+  $('#chAuto').onclick=()=>{const b=autoBuild();store.set('lxi.squad',b);renderChallenge();toast('Legal XI saved. Edit it in the builder if you like.')};
+  const sh=$('#chShare');if(sh)sh.onclick=async()=>{const t=shareText(evalXI(loadSquad()));try{if(navigator.share){await navigator.share({text:t});return}}catch(e){if(e&&e.name==='AbortError')return}
+    try{await navigator.clipboard.writeText(t);toast('Result copied')}catch(e){prompt('Copy your result:',t)}}}
+
+/* ============ BOOT ============ */
+renderLegend();renderChallenge();
+fetch('fixtures.json',{cache:'no-cache'}).then(r=>{if(!r.ok)throw new Error(r.status);return r.json()}).then(j=>{FX=j;renderFixtures()}).catch(()=>{
+  $('#nextCard').innerHTML='<p class="muted">Could not load fixtures. Check the <a href="https://thenonnegotiablog.com/timetable.html" rel="noopener">EPL timetable</a> instead.</p>'});
+window.__hub={CH:CH0,WK,RULES,challengeOf,autoBuild,evalXI,legendOfWeek,isoWeek};
+})();
+</script>
+</body>
+</html>
