@@ -646,8 +646,8 @@ const CAMS=[['auto','Auto director'],['broadcast','Broadcast'],['orbit','360°']
 function wx(x){return x-CX} function wz(y){return L/2-y}
 
 function build3D(){
-  const cv=$('#gl');const renderer=new THREE.WebGLRenderer({canvas:cv,antialias:true,powerPreference:'high-performance'});
-  renderer.setPixelRatio(Math.min(window.devicePixelRatio||1,1.75));renderer.outputEncoding=THREE.sRGBEncoding;
+  const cv=$('#gl');const renderer=new THREE.WebGLRenderer({canvas:cv,antialias:(window.devicePixelRatio||1)<2,powerPreference:'high-performance'});
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio||1,1.5));renderer.outputEncoding=THREE.sRGBEncoding;
   const scene=new THREE.Scene();scene.background=new THREE.Color('#0a1424');scene.fog=new THREE.Fog('#0a1424',150,300);
   const camera=new THREE.PerspectiveCamera(42,1,.5,700);camera.position.set(70,30,0);
   scene.add(new THREE.HemisphereLight('#dbe8ff','#20401f',.75));const sun=new THREE.DirectionalLight('#ffffff',.85);sun.position.set(40,90,30);scene.add(sun);
@@ -831,10 +831,10 @@ function updateCamera(dt,i,carrier,bx,by,bz){const r=match.res,cam=G.camera;cons
   if(mode==='orbit'){if(G.snap){G.controls.target.copy(G.camTarget)}G.controls.target.lerp(G.camTarget,kT);G.camPos.copy(cam.position);if(G.look)G.look.copy(G.controls.target);G.snap=false;return}
   const T=G.camTarget;const portrait=cam.aspect<1;let pos=tmpV,look=tmpL.copy(T);
   const possT=r.poss[i]>=0?r.poss[i]:0,swap=r.clock[i]>=45;const attDir=((possT===0)!==swap)?-1:1; // world z direction of attack
-  if(mode==='broadcast'){pos.set(portrait?48:58,portrait?34:26,T.z*.82);look.set(T.x*.5,0,T.z)}
+  if(mode==='broadcast'){pos.set(portrait?64:76,portrait?46:34,T.z*.82);look.set(T.x*.5,0,T.z)}
   else if(mode==='tactical'){pos.set(T.x*.25,portrait?95:70,T.z+(portrait?8:22));look.set(T.x*.25,0,T.z)}
   else if(mode==='trans'||mode==='goal'&&V.director.p<0){const want=attDir<0?0:Math.PI;let d=want-G.yaw;while(d>Math.PI)d-=2*Math.PI;while(d<-Math.PI)d+=2*Math.PI;G.yaw+=d*Math.min(1,dt*1.6);if(G.snap)G.yaw=want;
-    const dist=portrait?34:30;pos.set(T.x+Math.sin(G.yaw+.35)*dist,15,T.z+Math.cos(G.yaw+.35)*dist);look.set(T.x,0,T.z+attDir*14)}
+    const dist=portrait?46:40;pos.set(T.x+Math.sin(G.yaw+.35)*dist,19,T.z+Math.cos(G.yaw+.35)*dist);look.set(T.x,0,T.z+attDir*14)}
   else if(mode==='player'||mode==='goal'){const pi=mode==='goal'?V.director.p:(carrier>=0?carrier:-1);if(pi>=0){const g=G.rigs[pi].g;const h=g.rotation.y;const fx=Math.sin(h),fz=Math.cos(h);pos.set(g.position.x-fx*(mode==='goal'?-6:7),mode==='goal'?2.6:3.2,g.position.z-fz*(mode==='goal'?-6:7));look.set(g.position.x+fx*(mode==='goal'?0:10),1.1,g.position.z+fz*(mode==='goal'?0:10))}else{pos.set(T.x+18,10,T.z+18)}}
   const kP=G.snap?1:1-Math.exp(-dt*2.6);G.camPos.lerp(pos,kP);cam.position.copy(G.camPos);
   if(!G.look)G.look=look.clone();G.look.lerp(look,G.snap?1:1-Math.exp(-dt*4));cam.lookAt(G.look);G.snap=false;

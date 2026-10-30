@@ -11,8 +11,8 @@ const BROADCAST = (function () {
   function create(container, o) {
     const role = o.role, kits = o.kits, gks = o.gks;
     const cv = document.createElement('canvas'); cv.className = 'g'; container.prepend(cv);
-    const renderer = new THREE.WebGLRenderer({ canvas: cv, antialias: true, powerPreference: 'high-performance' });
-    renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2)); renderer.outputEncoding = THREE.sRGBEncoding;
+    const renderer = new THREE.WebGLRenderer({ canvas: cv, antialias: (window.devicePixelRatio || 1) < 2, powerPreference: 'high-performance' });
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 1.5)); renderer.outputEncoding = THREE.sRGBEncoding;
     const scene = new THREE.Scene(); scene.background = new THREE.Color('#2a3b52'); scene.fog = new THREE.Fog('#2a3b52', 140, 260);
     const camera = new THREE.PerspectiveCamera(36, 1, .5, 600);
     scene.add(new THREE.HemisphereLight('#e8f1ff', '#3d5c2a', .9));
@@ -132,13 +132,15 @@ const BROADCAST = (function () {
     /* ---- camera rig ---- */
     const side = role === 0 ? 1 : -1;            // camera sits on +Z touchline for Player 1, -Z for Player 2, so each sees their attack going right
     const camT = new THREE.Vector3(), camP = new THREE.Vector3(), look = new THREE.Vector3(); let first = true, aspect = 1.6;
-    function resize() { const r = container.getBoundingClientRect(); renderer.setSize(r.width, r.height, false); aspect = r.width / Math.max(1, r.height); camera.aspect = aspect; camera.fov = aspect < 1 ? 58 : aspect < 1.5 ? 42 : 34; camera.updateProjectionMatrix(); }
+    function resize() { const r = container.getBoundingClientRect(); renderer.setSize(r.width, r.height, false); aspect = r.width / Math.max(1, r.height); camera.aspect = aspect; camera.fov = aspect < 1 ? 60 : aspect < 1.5 ? 44 : 38; camera.updateProjectionMatrix(); }
     resize();
 
-    const ZOOMS = [{ h: 12, d: 21, n: 'Close' }, { h: 17, d: 30, n: 'Wide' }, { h: 23, d: 40, n: 'Extra wide' }];
-    let zi = 1; try { const v = +localStorage.getItem('lxi.camzoom'); if (v >= 0 && v < ZOOMS.length) zi = v; } catch (e) { }
-    function cycleZoom() { zi = (zi + 1) % ZOOMS.length; try { localStorage.setItem('lxi.camzoom', zi); } catch (e) { } return ZOOMS[zi].n; }
+    const ZOOMS = [{ h: 14, d: 25, n: 'Close' }, { h: 21, d: 37, n: 'Wide' }, { h: 30, d: 52, n: 'Extra wide' }];
+    let zi = 1; try { const v = +localStorage.getItem('lxi.camzoom2'); if (v >= 0 && v < ZOOMS.length) zi = v; } catch (e) { }
+    function cycleZoom() { zi = (zi + 1) % ZOOMS.length; try { localStorage.setItem('lxi.camzoom2', zi); } catch (e) { } return ZOOMS[zi].n; }
     let t0 = 0;
+    /* resolution: cap the pixel ratio at 1.5. A fixed cap is the biggest single GPU saving on 3x phones and avoids resizing the canvas mid-match. */
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 1.5)); resize();
     function render(sn, dt) {
       t0 += dt; const Pp = sn.p, me = sn.a[role], them = sn.a[1 - role];
       for (let i = 0; i < 22; i++) {
@@ -160,8 +162,8 @@ const BROADCAST = (function () {
       if (sn.r >= 0 && sn.r !== me) { const g = rigs[sn.r].grp.position; recvRing.visible = true; recvRing.position.set(g.x, .035, g.z); recvRing.scale.setScalar(1 + Math.sin(t0 * 8) * .08); } else recvRing.visible = false;
       // broadcast camera: follow the ball along the touchline, lean ahead of the ball carrier
       let lead = 0; if (sn.o >= 0) lead = (sn.o < 11 ? 1 : -1) * 5;
-      const edge = 6 + zi * 4, tx = Math.max(-L / 2 + edge, Math.min(L / 2 - edge, bX + lead)), tz = bZ * .6;
-      const portrait = aspect < 1, Z0 = ZOOMS[zi], h = portrait ? Z0.h * 1.8 : Z0.h, dist = portrait ? Z0.d * 1.35 : Z0.d;
+      const edge = 12 + zi * 6, tx = Math.max(-L / 2 + edge, Math.min(L / 2 - edge, bX + lead)), tz = bZ * .6;
+      const portrait = aspect < 1, Z0 = ZOOMS[zi], h = portrait ? Z0.h * 1.6 : Z0.h, dist = portrait ? Z0.d * 1.3 : Z0.d;
       camT.set(tx, 0, tz);
       const desired = new THREE.Vector3(tx, h, tz * .35 + side * (W / 2 * .35 + dist));
       const kk = first ? 1 : 1 - Math.exp(-dt * 2.6); camP.lerp(desired, kk); look.lerp(camT, first ? 1 : 1 - Math.exp(-dt * 3.6)); first = false;
@@ -171,6 +173,8 @@ const BROADCAST = (function () {
     // stick on screen -> sim direction. Screen right = my attacking direction (sim +y for Player 1, -y for Player 2); screen up = away from the camera.
     function dirFromStick(jx, jy) { return role === 0 ? [jy, jx] : [-jy, -jx]; }
     function dispose() { try { renderer.dispose(); } catch (e) { } cv.remove(); }
+    /* static scenery never moves: freeze its matrices so three.js skips them every frame */
+    try { const dyn = new Set([ball, bshadow, marker, markerEdge, foot, arrowG, recvRing, oppMark].concat(rigs.map(r => r.grp))); scene.updateMatrixWorld(true); scene.children.forEach(o => { if (!dyn.has(o)) o.traverse(c => { c.matrixAutoUpdate = false; }); }); } catch (e) { }
     return { render, resize, dispose, dirFromStick, cycleZoom, zoomName: () => ZOOMS[zi].n };
   }
   return { create };

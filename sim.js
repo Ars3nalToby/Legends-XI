@@ -57,6 +57,66 @@ const SIM = (function () {
     return [x, d > 0 ? depth : L - depth];
   }
 
+
+  /* ---------- team AI: pressing, marking, support, runs and transitions (deterministic: uses no random numbers) ---------- */
+  function teamAI(dt) {
+    M.sinceChg += dt; M.planT -= dt; if (M.planT > 0) return; M.planT = .1; dt = .1; /* re-plan 10x a second, not 60x */
+    const b = M.ball, own = b.owner, ot = own ? own.team : -1; M.markT -= dt; const remark = M.markT <= 0; if (remark) M.markT = .3;
+    for (const t of [0, 1]) {
+      const mine = M.teams[t], opp = M.teams[1 - t], pl = M.plan[t], ad = dir(t), og = ownGoalY(t);
+      pl.phase = ot === t ? 'att' : ot < 0 ? 'loose' : 'def';
+      pl.counter = pl.phase === 'att' && M.chgTeam === t && M.sinceChg < 3.8;
+      pl.cpress = pl.phase === 'def' && M.chgTeam === 1 - t && M.sinceChg < 3.2;
+      pl.recover = pl.phase !== 'att' && M.chgTeam === 1 - t && M.sinceChg < 4.5;
+      const c = mine.filter(q => !q.gk && q !== own).sort((p, q) => hyp(p.x - b.x, p.y - b.y) - hyp(q.x - b.x, q.y - b.y));
+      pl.press1 = pl.phase === 'att' ? null : c[0] || null; pl.press2 = pl.phase === 'att' ? null : c[1] || null; pl.sup = [];
+      let line = ad === 1 ? 0 : L; for (const o of opp) if (!o.gk) line = ad === 1 ? Math.max(line, o.y) : Math.min(line, o.y); pl.line = line;
+      if (pl.phase === 'att' && own) {
+        const cs = c.filter(q => q.sy > .12 && q.sy < .7).sort((p, q) => hyp(p.x - own.x, p.y - own.y) - hyp(q.x - own.x, q.y - own.y)); pl.sup = cs.slice(0, 3);
+        pl.sideT = (pl.sideT || 0) - dt;
+        if (!pl.side || pl.sideT <= 0 || M.sinceChg < .05) { const [no] = nearest(opp.filter(q => !q.gk), own.x, own.y); pl.side = no ? (own.x < no.x ? -1 : 1) : (own.x < CX ? 1 : -1); pl.sideT = 1.4; }
+      }
+      if (remark) {
+        for (const q of mine) q.mark = null;
+        if (pl.phase !== 'att') {
+          const used = new Set([pl.press1, pl.press2]), ops = opp.filter(o => !o.gk && o !== own).sort((p, q) => Math.abs(p.y - og) - Math.abs(q.y - og));
+          for (const o of ops) { if (Math.abs(o.y - og) > 62) break; let best = null, bd = 18; for (const q of c) { if (used.has(q)) continue; const d = hyp(q.x - o.x, q.y - o.y); if (d < bd) { bd = d; best = q; } } if (best) { best.mark = o; used.add(best); } }
+        }
+      }
+    }
+  }
+  function aiTarget(p) {
+    const b = M.ball, t = p.team, pl = M.plan[t], ad = dir(t), og = ownGoalY(t), cr = b.owner, fx = slotX(p) / W;
+    const base = formTarget(p); let tx = base[0], ty = base[1], mul = .82, arr = 2.5;
+    const far = hyp(tx - p.x, ty - p.y) > 8; if (far) mul = 1.12;
+    if (pl.phase === 'att' && cr) {
+      const k = pl.sup.indexOf(p), side = pl.side || 1, ahead = y => ad === 1 ? Math.min(y, pl.line - 1.5) : Math.max(y, pl.line + 1.5);
+      if (k >= 0) {
+        if (k === 0) { tx = cr.x + side * 13; ty = cr.y + ad * 8; } else if (k === 1) { tx = cr.x - side * 14; ty = cr.y + ad * 3; } else { tx = cr.x + side * 6; ty = cr.y - ad * 12; }
+        ty = ahead(ty); mul = 1.05; arr = 1.5;
+      } else if (p.sy > .55) {
+        tx = fx * W + (cr.x - CX) * .2; const want = ad === 1 ? Math.max(ty, Math.min(cr.y + 14, pl.line - 1.5)) : Math.min(ty, Math.max(cr.y - 14, pl.line + 1.5));
+        ty = ahead(want); if (pl.counter) { ty = ahead(ty + ad * 10); mul = 1.3; } else mul = far ? 1.18 : 1;
+        tx += Math.sin((M.t * 4 + p.i) * .6) * 2.5;
+      } else if (p.sy > .3) {
+        ty = ahead(ty + ad * (((cr.y - L / 2) * ad > 0) ? 6 : 2)); if (pl.counter) { ty = ahead(cr.y + ad * 2); mul = 1.25; }
+      } else if (fx < .25 || fx > .75) {
+        if ((cr.y - L / 2) * ad > 0) { ty = ahead(base[1] + ad * 16); tx = fx < .5 ? 5 : W - 5; mul = 1.08; }
+      }
+      if (p.sy < .55) { const dd = hyp(p.x - cr.x, p.y - cr.y); if (dd < 7 && dd > .01) { const k2 = (9 - dd) / dd * .6; tx += (p.x - cr.x) * k2; ty += (p.y - cr.y) * k2; } }
+    } else if (pl.phase !== 'att') {
+      if (p === pl.press2) {
+        if (pl.cpress && hyp(p.x - b.x, p.y - b.y) < 15) { tx = b.x; ty = b.y; mul = 1.22; arr = .5; } else { tx = b.x + (CX - b.x) * .2; ty = b.y + (og - b.y) * .2; mul = 1.05; arr = 1.2; }
+      } else if (p.mark && pl.phase === 'def') {
+        const o = p.mark, gx = CX - o.x, gy = og - o.y, n = hyp(gx, gy) || 1, mx = o.x + gx / n * 2.2 + (b.x - o.x) * .05, my = o.y + gy / n * 2.2;
+        if (Math.abs(my - base[1]) < 24) { tx = mx; ty = ad === 1 ? Math.min(my, b.y - .8) : Math.max(my, b.y + .8); mul = 1.05; arr = 1; }
+      }
+      if (pl.recover && far) mul = Math.max(mul, 1.28);
+      if (pl.cpress && p.sy < .55 && p !== pl.press2) mul = Math.max(mul, 1.12);
+    }
+    return [clamp(tx, 2, W - 2), clamp(ty, 1, L - 1), mul, arr];
+  }
+
   /* ---------- ball contacts ---------- */
   function kick(p, vx, vy, vz, kind) {
     const b = M.ball;
@@ -77,7 +137,7 @@ const SIM = (function () {
     Object.assign(b, { owner: p, last: p, passer: null, recv: null, shot: false, gkRolled: false, shotInfo: null, kind: null, z: 0, vz: 0 });
     p.think = .25 + rng() * .3; p.hold = p.gk ? 1.1 + rng() * .8 : 0; p.st.touches++;
     for (const q of M.all) q.run = null;
-    if (prevTeam !== p.team) { M.possTeam = p.team; if (how === 'tackle' || how === 'intercept' || how === 'block') { M.transition = { team: p.team, t: M.t }; ev('turnover', { team: p.team, how, p: pk(p) }); } }
+    if (prevTeam !== p.team) { M.possTeam = p.team; M.chgTeam = p.team; M.sinceChg = 0; M.planT = 0; if (how === 'tackle' || how === 'intercept' || how === 'block') { M.transition = { team: p.team, t: M.t }; ev('turnover', { team: p.team, how, p: pk(p) }); } }
   }
 
   function lanePenalty(p, tx, ty) {
@@ -186,7 +246,7 @@ const SIM = (function () {
     }
     const st = M.teams[team].reduce((a, p) => p.sy > a.sy ? p : a);
     st.x = CX; st.y = L / 2 - dir(team) * .6;
-    placeBall(CX, L / 2); M.possTeam = team; gain(st, 'kickoff'); M.pause = 1.2; M.cut = true; M.transition = null;
+    placeBall(CX, L / 2); M.possTeam = team; gain(st, 'kickoff'); M.pause = 1.2; M.cut = true; M.transition = null; M.sinceChg = 99;
   }
 
   /* ---------- AI ---------- */
@@ -267,32 +327,21 @@ const SIM = (function () {
     // final-third entry lanes
     if (own && !own.gk) { const f3 = Math.abs(own.y - oppGoalY(ot)) < 35; if (f3 && !M.inF3[ot]) { M.inF3[ot] = true; let lane = own.x < W / 3 ? 0 : own.x > 2 * W / 3 ? 2 : 1; if (dir(ot) < 0) lane = 2 - lane; M.stats[ot].lanes[lane]++; } if (!f3) M.inF3[ot] = false; }
     const tgtX = b.x + b.vx * .3, tgtY = b.y + b.vy * .3;
-    const chaser = [], cover = [];
-    for (const t of [0, 1]) {
-      if (ot === t) { chaser[t] = cover[t] = null; continue; }
-      const of = outfield(t); const [c1] = nearest(of, own ? own.x : tgtX, own ? own.y : tgtY); chaser[t] = c1;
-      cover[t] = ot >= 0 ? nearest(of, own.x, own.y, c1)[0] : null;
-    }
+    teamAI(dt);
     for (const p of M.all) {
       if (p.stun > 0) { accelTo(p, 0, 0, dt); continue; }
       if (p.gk && own !== p) { gkAI(p, dt); continue; }
       if (own === p) { ownerAI(p, dt); continue; }
       if (b.recv === p) { receiverMove(p, dt); continue; }
       if (p.run) { moveTo(p, p.run.x, p.run.y, jog(p) * 1.22, dt); if (hyp(p.run.x - p.x, p.run.y - p.y) < 1) p.run = null; continue; }
-      const t = p.team;
-      if (p === chaser[t]) {
+      const t = p.team, pl = M.plan[t];
+      if (p === pl.press1) {
         const tx = own ? own.x + own.vx * .25 : tgtX, ty = own ? own.y + own.vy * .25 : tgtY;
-        moveTo(p, tx, ty, jog(p) * 1.16, dt, .4);
+        moveTo(p, tx, ty, jog(p) * (pl.cpress ? 1.28 : 1.16), dt, .4);
         if (own && p.cd <= 0 && hyp(own.x - p.x, own.y - p.y) < 1.2) tackle(p, own);
         continue;
       }
-      if (p === cover[t] && own) { const og = ownGoalY(t); moveTo(p, own.x + (CX - own.x) * .25, own.y + (og - own.y) * Math.min(.3, 6 / (Math.abs(og - own.y) + 1)), jog(p), dt); continue; }
-      let [tx, ty] = formTarget(p);
-      if (ot === t && p.sy > .45 && p.runCD <= 0 && rng() < .03) {
-        p.runCD = 5 + rng() * 5; const d = dir(t);
-        const rx = clamp(p.x + gauss() * 6, 4, W - 4), ry = clamp(p.y + d * (8 + rng() * 8), 2, L - 2); p.run = { x: rx, y: ry };
-      }
-      moveTo(p, tx, ty, jog(p) * (hyp(tx - p.x, ty - p.y) > 8 ? 1.12 : .82), dt, 2.5);
+      if (!p.tg || (p.tT -= dt) <= 0) { p.tg = aiTarget(p); p.tT = .09; } moveTo(p, p.tg[0], p.tg[1], jog(p) * p.tg[2], dt, p.tg[3]);
     }
     integrate(dt);
     if (M.after) return; // a goal or restart scheduled inside integrate/ball
@@ -383,7 +432,7 @@ const SIM = (function () {
   /* ---------- run + record ---------- */
   function simulateMatch(A, B, seedVal, dur) {
     seed = seedVal | 0 || 1;
-    M = { t: 0, dur: dur || 480, swap: false, score: [0, 0], events: [], pause: 0, possTeam: -1, poss: [0, 0], inF3: [false, false], transition: null, pending: null, after: null, celebrate: null, cut: false, firstTime: null, assist: null };
+    M = { t: 0, dur: dur || 480, swap: false, score: [0, 0], events: [], pause: 0, possTeam: -1, poss: [0, 0], inF3: [false, false], transition: null, pending: null, after: null, celebrate: null, cut: false, firstTime: null, assist: null, sinceChg: 99, chgTeam: -1, markT: 0, planT: 0, plan: [{ sup: [] }, { sup: [] }] };
     M.stats = [0, 1].map(() => ({ passes: 0, passOk: 0, shots: 0, sot: 0, xg: 0, corners: 0, fouls: 0, yc: 0, tkl: 0, int: 0, saves: 0, lanes: [0, 0, 0] }));
     M.teams = [makeSide(0, A), makeSide(1, B)]; M.all = M.teams[0].concat(M.teams[1]);
     M.ball = { x: CX, y: L / 2, z: 0, vx: 0, vy: 0, vz: 0, owner: null, last: null, np: null, npT: 0, rolled: new Set(), shot: false, shotTeam: -1, shotQ: 0, gkRolled: false, recv: null, passer: null, shotInfo: null, kind: null };
