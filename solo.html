@@ -128,6 +128,7 @@ footer{padding-block:28px;color:var(--muted);font-size:13px;border-top:1px solid
 .pitch{position:relative;width:100%;max-width:560px;margin:0 auto;aspect-ratio:68/92;background:
   repeating-linear-gradient(180deg,var(--grass) 0 9.09%,var(--grass2) 9.09% 18.18%);border-radius:8px;overflow:hidden;box-shadow:inset 0 0 0 1px #ffffff1a}
 .pitch svg.lines{position:absolute;inset:0;width:100%;height:100%}
+.pitchhost{min-width:0}.meters{display:none}
 .slot{position:absolute;transform:translate(-50%,-50%);width:66px;display:flex;flex-direction:column;align-items:center;border:0;background:none;padding:0}
 .slot .face{width:58px;height:58px;border-radius:6px;background:linear-gradient(165deg,#22372c,#0f1a14);border-top:3px solid var(--brass);display:flex;flex-direction:column;align-items:center;justify-content:center;box-shadow:0 6px 14px -6px #000;position:relative}
 .slot.ars .face{border-top-color:var(--red)}
@@ -334,18 +335,7 @@ footer{padding-block:28px;color:var(--muted);font-size:13px;border-top:1px solid
       <div class="meter"><span>Gunners</span><b id="mGun">0</b></div>
     </div>
     <div class="squad-grid">
-      <div class="pitch" id="pitch">
-        <svg class="lines" viewBox="0 0 68 92" preserveAspectRatio="none" aria-hidden="true">
-          <g fill="none" stroke="#ffffff40" stroke-width=".35">
-            <rect x="1.5" y="1.5" width="65" height="89"/>
-            <line x1="1.5" y1="1.5" x2="66.5" y2="1.5"/>
-            <circle cx="34" cy="1.5" r="9"/>
-            <rect x="13.8" y="74.5" width="40.4" height="16"/>
-            <rect x="24.8" y="85" width="18.4" height="5.5"/>
-            <path d="M26.7 74.5 A9 9 0 0 1 41.3 74.5"/>
-          </g>
-        </svg>
-      </div>
+      <div id="pitch" class="pitchhost"></div>
       <div class="side">
         <div class="box">
           <h3>Fill the gaps</h3>
@@ -430,6 +420,7 @@ footer{padding-block:28px;color:var(--muted);font-size:13px;border-top:1px solid
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script src="/data.js"></script>
+<script src="/pitch.js"></script>
 <script src="/live.js"></script>
 <script src="/broadcast.js"></script>
 <script>
@@ -464,17 +455,12 @@ function renderSquad(){
   $('#forms').innerHTML=Object.keys(FORMS).map(f=>`<button class="chip${f===squad.form?' on':''}" data-form="${f}">${f}</button>`).join('');
   const st=teamStats(squad.form,squad.xi);
   $('#mOvr').textContent=st.ovr||'–';$('#mChem').textContent=st.chem+'/33';$('#mChemBar').style.width=(st.chem/33*100)+'%';$('#mGun').textContent=st.gun+'/11';
-  const sl=FORMS[squad.form];const pitch=$('#pitch');pitch.querySelectorAll('.slot').forEach(e=>e.remove());
-  sl.forEach((s,i)=>{const id=squad.xi[i];const b=document.createElement('button');const p=id!=null?PL[id]:null;
-    b.className='slot'+(p?(p.ars?' ars':''):' empty');b.style.left=(s[1]*100)+'%';b.style.top=((.94-s[2]*1.06)*100)+'%';b.dataset.slot=i;
-    b.setAttribute('aria-label',p?`${s[0]}: ${p.name}, change`:`Add a ${s[0]}`);
-    if(p){const f=fit(p,s[0]);b.innerHTML=`<span class="face"><i class="dot" style="background:${fitColor(f)}"></i><b>${effOvr(p,s[0])}</b><small>${s[0]}</small></span><span class="nm">${esc(p.short)}</span>`}
-    else b.innerHTML=`<span class="face"><b>+</b><small>${s[0]}</small></span><span class="nm">${s[0]}</span>`;
-    pitch.appendChild(b)});
+  $('#pitch').innerHTML=PITCH.html({key:'solo',form:squad.form,xi:squad.xi,kit:{a:'#e3182c',b:'#ffffff'},slotAttr:i=>`data-slot="${i}"`});
 }
 
 /* picker */
 let pick={slot:-1,filter:'all',q:'',any:false};
+PITCH.onSwap=(k,i,j)=>{const x=squad.xi;[x[i],x[j]]=[x[j],x[i]];save();renderAll()};
 function openPicker(i){pick.slot=i;pick.q='';$('#pickQ').value='';$('#sheet').hidden=false;$('#pickRemove').hidden=squad.xi[i]==null;renderPick();setTimeout(()=>{if(matchMedia('(pointer:fine)').matches)$('#pickQ').focus()},50)}
 function closePicker(){$('#sheet').hidden=true}
 function renderPick(){const sp=FORMS[squad.form][pick.slot][0];$('#pickTitle').textContent='Pick a '+sp;
@@ -526,7 +512,7 @@ window.addEventListener('hashchange',route);
 document.addEventListener('click',e=>{const t=e.target.closest('button');if(!t)return;
   if(t.dataset.preset){applyPreset(t.dataset.preset);if(t.closest('#v-home'))location.hash='#squad';return}
   if(t.dataset.form){squad.form=t.dataset.form;save();renderAll();return}
-  if(t.dataset.slot!=null&&t.classList.contains('slot')){openPicker(+t.dataset.slot);return}
+  if(t.dataset.slot!=null&&t.classList.contains('ps')){openPicker(+t.dataset.slot);return}
   if(t.dataset.pid!=null){assign(+t.dataset.pid);return}
   if(t.dataset.pf){if(t.dataset.pf==='any')pick.any=!pick.any;else pick.filter=t.dataset.pf;renderPick();return}
   if(t.dataset.opp){settings.opp=t.dataset.opp;if(t.dataset.opp==='gala')galaSeed=Math.random();save();renderPlay();return}

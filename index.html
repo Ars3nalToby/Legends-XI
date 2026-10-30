@@ -425,6 +425,7 @@ section.block h3{font-size:26px;margin-bottom:10px}
 <script src="/data.js"></script>
 <script src="/sim.js"></script>
 <script src="/studio.js"></script>
+<script src="/pitch.js"></script>
 <script src="/live.js"></script>
 <script src="/broadcast.js"></script>
 <script>
@@ -477,14 +478,13 @@ function cardHTML(t,ti){const k=kitOf(t.kit),st=teamStats(t.form,t.xi);const sl=
       <div class="names"><label>Manager<input id="mgr${ti}" data-mgr="${ti}" value="${esc(t.mgr)}" maxlength="18"></label><label>Team name<input id="tn${ti}" data-tn="${ti}" value="${esc(t.name)}" maxlength="22"></label></div>
       <div class="kits">${KITS.map(x=>`<button class="kit${x.id===t.kit?' on':''}" style="--a:${x.a};--b:${x.b}" data-kit="${ti}:${x.id}" aria-label="${x.name} kit"></button>`).join('')}</div>
       <div class="seg">${Object.keys(FORMS).map(f=>`<button class="chip${f===t.form?' on':''}" data-form="${ti}:${f}">${f}</button>`).join('')}</div>
-      <div class="tsum"><div><b>${st.ovr||'–'}</b><span>OVR</span></div><div><b>${st.chem}</b><span>/33 chem</span></div><div><b>${st.n}</b><span>/11</span></div><div><b>${st.gun}</b><span>Gunners</span></div></div>
-      <div class="xi">${sl.map((s,i)=>{const id=t.xi[i];const p=id!=null?PL[id]:null;const f=p?fit(p,s[0]):null;
-        return `<button class="xrow" data-slot="${ti}:${i}"><span class="pos">${s[0]}</span><span class="nm${p?'':' empty'}">${p?esc(p.name):'Tap to pick'}</span><span class="ov">${p?effOvr(p,s[0]):''}</span><span class="dot" style="background:${f?fitColor(f):'transparent'}"></span></button>`}).join('')}</div>
+      ${PITCH.html({key:String(ti),form:t.form,xi:t.xi,kit:k})}
       <div class="tact">
         ${myLxi?`<button class="chip" data-act="lxi:${ti}">Load my Legends XI</button>`:''}
         <button class="chip" data-act="auto:${ti}">Auto-fill</button><button class="chip" data-act="gun:${ti}">Gunners only</button><button class="chip" data-act="clear:${ti}">Clear</button>
         ${CT===D?`<button class="chip" data-act="copy:${ti}">Copy team code</button><button class="chip" data-act="paste:${ti}">Paste team code</button>`:''}
       </div></div></div>`}
+PITCH.onSwap=(key,i,j)=>{const t=CT.teams[+key];if(!t||D.draft)return;const x=t.xi;[x[i],x[j]]=[x[j],x[i]];save();renderSetup()};
 function fillTeam(ti,pool){const t=CT.teams[ti];const other=new Set(CT.teams[1-ti].xi.filter(x=>x!=null));t.xi=autofill(t.form,t.xi,pool.filter(p=>!other.has(p.id)));save();renderSetup()}
 document.addEventListener('input',e=>{const t=e.target;if(t.dataset.mgr!=null){const tm=CT.teams[+t.dataset.mgr];const old=tm.mgr;tm.mgr=t.value;if(!tm.name||tm.name===old+' XI'){tm.name=t.value+' XI';const n=$('#tn'+t.dataset.mgr);if(n)n.value=tm.name}save()}
   if(t.dataset.tn!=null){CT.teams[+t.dataset.tn].name=t.value;save()}});
@@ -493,7 +493,7 @@ document.addEventListener('click',e=>{const b=e.target.closest('button');if(!b)r
   if(ds.len){D.len=+ds.len;save();renderSetup();return}
   if(ds.kit){const [ti,k]=ds.kit.split(':');CT.teams[+ti].kit=k;save();renderSetup();return}
   if(ds.form){const [ti,f]=ds.form.split(':');CT.teams[+ti].form=f;save();renderSetup();return}
-  if(ds.slot&&b.classList.contains('xrow')){const [ti,i]=ds.slot.split(':').map(Number);if(D.draft){snack('Draft picks fill positions automatically');return}openPicker(ti,i);return}
+  if(ds.slot&&b.classList.contains('ps')){const [ti,i]=ds.slot.split(':').map(Number);if(D.draft){snack('Draft picks fill positions automatically');return}openPicker(ti,i);return}
   if(ds.act){const [a,ti_]=ds.act.split(':');const ti=+ti_;const t=CT.teams[ti];
     if(a==='lxi'&&myLxi){const other=new Set(CT.teams[1-ti].xi);t.form=myLxi.form;t.xi=myLxi.xi.map(x=>other.has(x)?null:x);save();renderSetup();if(myLxi.xi.some(x=>other.has(x)))snack('Some legends were already on the other side')}
     if(a==='auto')fillTeam(ti,PL);if(a==='gun')fillTeam(ti,PL.filter(p=>p.ars));
