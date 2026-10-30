@@ -103,7 +103,7 @@ const BROADCAST = (function () {
       const sh = new THREE.Mesh(geo.shorts, mh); sh.position.y = .82; body.add(sh);
       const head = new THREE.Mesh(geo.head, sk); head.position.y = 1.67; body.add(head);
       const hair = new THREE.Mesh(geo.hair, hr); hair.position.y = 1.69; body.add(hair);
-      const num = new THREE.Mesh(geo.num, new THREE.MeshBasicMaterial({ map: numTex(gk ? 1 : (i % 11) + 1, txtCol(shirt)), transparent: true })); num.position.set(0, 1.25, -.155); num.rotation.y = Math.PI; body.add(num);
+      const num = new THREE.Mesh(geo.num, new THREE.MeshBasicMaterial({ map: numTex(o.nums && o.nums[i] ? o.nums[i] : (gk ? 1 : (i % 11) + 1), txtCol(shirt)), transparent: true })); num.position.set(0, 1.25, -.155); num.rotation.y = Math.PI; body.add(num);
       const leg = sx => { const p = new THREE.Group(); p.position.set(sx, .74, 0); const a = new THREE.Mesh(geo.thigh, sk); a.position.y = -.19; p.add(a); const s = new THREE.Mesh(geo.shin, mk); s.position.y = -.55; p.add(s); const b = new THREE.Mesh(geo.boot, bt); b.position.set(0, -.72, .06); p.add(b); body.add(p); return p; };
       const sleeveMat = (!gk && kt.id === 'red') ? new THREE.MeshLambertMaterial({ color: '#ffffff' }) : ms;
       const arm = sx => { const p = new THREE.Group(); p.position.set(sx, 1.48, 0); const a = new THREE.Mesh(geo.arm, sk); a.position.y = -.28; p.add(a); const s = new THREE.Mesh(geo.sleeve, sleeveMat); s.position.y = -.08; p.add(s); body.add(p); return p; };

@@ -38,9 +38,11 @@ const RAW=[
 ['Gabriel Batistuta','ST',91,'ARG','90 00',0,82,94,72,40],['Andriy Shevchenko','ST',91,'UKR','90 00',0,90,92,78,42],['Raúl','ST',90,'ESP','90 00',0,82,90,84,40],
 ['Romário','ST',92,'BRA','90',0,88,94,80,30],['Alan Shearer','ST',90,'ENG','90 00',0,80,93,76,45],['George Weah','ST',90,'LBR','90',0,92,90,80,40],
 ["Samuel Eto'o",'ST',90,'CMR','00 10',0,92,90,78,45],['Zlatan Ibrahimović','ST',91,'SWE','00 10',0,78,92,86,40],['Didier Drogba','ST',89,'CIV','00 10',0,82,90,74,45],
-['Wayne Rooney','ST',89,'ENG','00 10',0,84,88,86,55],['Luis Suárez','ST',92,'URU','10',0,84,93,86,45],['Robert Lewandowski','ST',92,'POL','10 20',0,80,95,82,40],
+['Wayne Rooney','ST',89,'ENG','00 10',0,84,88,86,55],['Luis Suárez','CF',92,'URU','10',0,84,93,86,45],['Robert Lewandowski','ST',92,'POL','10 20',0,80,95,82,40],
 ['Karim Benzema','ST',91,'FRA','10 20',0,80,90,88,40],['Harry Kane','ST',90,'ENG','10 20',0,70,93,88,45],['Kylian Mbappé','ST',93,'FRA','10 20',0,98,92,84,36],
-['Erling Haaland','ST',92,'NOR','20',0,92,95,70,45]
+['Erling Haaland','ST',92,'NOR','20',0,92,95,70,45],
+['Oliver Kahn','GK',92,'GER','90 00',0,88,93,90,78],['Pepe','CB',87,'POR','00 10 20',0,78,50,66,89],['Jaap Stam','CB',89,'NED','90 00',0,80,45,66,92],
+['Kyle Walker','RB',86,'ENG','10 20',0,94,58,76,84],['Alphonso Davies','LB',85,'CAN','20',0,96,60,76,78],['Frank Rijkaard','CDM',89,'NED','90',0,76,68,86,89]
 ];
 const PL=RAW.map((r,i)=>({id:i,name:r[0],pos:r[1],ovr:r[2],nat:r[3],dec:r[4].split(' '),ars:!!r[5],s:[r[6],r[7],r[8],r[9]]}));
 PL.forEach(p=>{const m=p.name.match(/\b((van der|van|de) \S+)$/i);let s=m?m[1]:p.name.split(' ').slice(-1)[0];
@@ -54,9 +56,10 @@ const FORMS={
  '4-3-3':[['GK',.5,.02],['LB',.14,.24],['CB',.37,.18],['CB',.63,.18],['RB',.86,.24],['CM',.27,.47],['CDM',.5,.38],['CM',.73,.47],['LW',.16,.72],['ST',.5,.8],['RW',.84,.72]],
  '4-4-2':[['GK',.5,.02],['LB',.14,.24],['CB',.37,.18],['CB',.63,.18],['RB',.86,.24],['LM',.14,.52],['CM',.38,.44],['CM',.62,.44],['RM',.86,.52],['ST',.38,.78],['ST',.62,.78]],
  '4-2-3-1':[['GK',.5,.02],['LB',.14,.24],['CB',.37,.18],['CB',.63,.18],['RB',.86,.24],['CDM',.37,.38],['CDM',.63,.38],['LW',.16,.62],['CAM',.5,.6],['RW',.84,.62],['ST',.5,.8]],
+ '3-4-1-2':[['GK',.5,.02],['CB',.26,.2],['CB',.5,.17],['CB',.74,.2],['LM',.1,.5],['CDM',.36,.4],['CDM',.64,.4],['RM',.9,.5],['CAM',.5,.62],['ST',.38,.8],['ST',.62,.8]],
  '3-5-2':[['GK',.5,.02],['CB',.26,.2],['CB',.5,.17],['CB',.74,.2],['LM',.1,.5],['CM',.32,.48],['CDM',.5,.37],['CM',.68,.48],['RM',.9,.5],['ST',.38,.78],['ST',.62,.78]]
 };
-const COMPAT={GK:['GK'],CB:['CB'],LB:['LB'],RB:['RB'],CDM:['CDM','CM'],CM:['CM','CDM','CAM'],CAM:['CAM','CF','CM'],LW:['LW'],RW:['RW'],LM:['LW','LM'],RM:['RW','RM'],ST:['ST','CF']};
+const COMPAT={GK:['GK'],CB:['CB'],LB:['LB'],RB:['RB'],CDM:['CDM','CM'],CM:['CM','CDM','CAM'],CAM:['CAM','CF','CM'],LW:['LW'],RW:['RW'],LM:['LW','LM','LB'],RM:['RW','RM','RB'],ST:['ST','CF']};
 const LINE={GK:'G',CB:'D',LB:'D',RB:'D',CDM:'M',CM:'M',CAM:'M',CF:'A',LW:'A',RW:'A',LM:'M',RM:'M',ST:'A'};
 function fit(p,slotPos){if(COMPAT[slotPos].includes(p.pos))return 'nat';const a=LINE[p.pos],b=LINE[slotPos];if(a==='G'||b==='G')return 'off';if(a===b||(b==='M'&&a==='A'&&(slotPos==='LM'||slotPos==='RM')))return 'line';return 'off'}
 const effOvr=(p,sp)=>{const f=fit(p,sp);return p.ovr-(f==='nat'?0:f==='line'?4:12)};
@@ -65,6 +68,7 @@ const fitColor=f=>f==='nat'?'var(--ok)':f==='line'?'var(--warn)':'var(--bad)';
 const PRESETS={
  inv:{form:'4-4-2',names:['Jens Lehmann','Ashley Cole','Sol Campbell','Kolo Touré','Lauren','Robert Pires','Patrick Vieira','Gilberto Silva','Freddie Ljungberg','Thierry Henry','Dennis Bergkamp']},
  ars:{form:'4-2-3-1',names:['David Seaman','Ashley Cole','Tony Adams','Sol Campbell','Lee Dixon','Patrick Vieira','Declan Rice','Robert Pires','Dennis Bergkamp','Bukayo Saka','Thierry Henry']},
+ dark:{form:'3-4-1-2',names:['Oliver Kahn','Jaap Stam','Sergio Ramos','Pepe','Alphonso Davies','Patrick Vieira','Frank Rijkaard','Kyle Walker','Luis Suárez','Didier Drogba','Zlatan Ibrahimović']},
  mod:{form:'4-3-3',names:['David Raya','Ashley Cole','William Saliba','Gabriel','Ben White','Santi Cazorla','Declan Rice','Martin Ødegaard','Gabriel Martinelli','Thierry Henry','Bukayo Saka']}
 };
 
@@ -76,3 +80,8 @@ function autofill(form,xi,pool){const sl=FORMS[form];const out=xi.slice();const 
   for(const i of order){if(out[i]!=null)continue;let best=null,bs=-1;for(const p of pool){if(used.has(p.id))continue;const v=effOvr(p,sl[i][0])+(fit(p,sl[i][0])==='nat'?.5:0);if(v>bs){bs=v;best=p}}
     if(best){out[i]=best.id;used.add(best.id)}}
   return out}
+
+/* Real shirt numbers where we know them (Dark Arts Warriors squad). Anyone else gets the lowest free number. */
+const SHIRTS={'Oliver Kahn':1,'Pepe':3,'Sergio Ramos':4,'Jaap Stam':6,'Kyle Walker':2,'Alphonso Davies':19,'Patrick Vieira':14,'Frank Rijkaard':8,'Luis Suárez':9,'Didier Drogba':11,'Zlatan Ibrahimović':10};
+function shirtNums(xi){const used=new Set(),out=xi.map(id=>{const n=id!=null&&PL[id]?SHIRTS[PL[id].name]:undefined;if(n&&!used.has(n)){used.add(n);return n}return 0});
+  let c=1;return out.map((n,i)=>{if(n)return n;if(PL[xi[i]]&&PL[xi[i]].pos==='GK'&&!used.has(1)){used.add(1);return 1}while(used.has(c))c++;used.add(c);return c})}

@@ -349,7 +349,7 @@ const LIVE = (function () {
 
     function txt(hex) { const c = parseInt(hex.slice(1), 16), r = c >> 16, g = c >> 8 & 255, b = c & 255; return (r * 299 + g * 587 + b * 114) / 1000 > 150 ? '#0a1410' : '#fff'; }
     function resize() { if (view3) view3.resize(); const r = root.getBoundingClientRect(), dpr = Math.min(2, window.devicePixelRatio || 1); cv.width = r.width * dpr; cv.height = r.height * dpr; dims = { w: r.width, h: r.height, dpr, land: r.width > r.height, s: r.width > r.height ? Math.max(r.height / 40, r.width / 70) : r.width / 40 }; if (dims.land) { rc.width = 120; rc.height = 80; } else { rc.width = 64; rc.height = 96; } }
-    let view3 = null; if (b3) { try { view3 = BROADCAST.create(root, { kits, role, names: null, gks }); } catch (e) { view3 = null; root.classList.remove('b3'); } }
+    let view3 = null; if (b3) { try { view3 = BROADCAST.create(root, { kits, role, names: null, gks, nums: teams.flatMap(t => shirtNums(t.xi)) }); } catch (e) { view3 = null; root.classList.remove('b3'); } }
     window.addEventListener('resize', resize); resize();
     // world (x,y) -> view coords where my team attacks up/right
     const vx = x => role === 0 ? x : W - x, vy = y => role === 0 ? y : L - y;

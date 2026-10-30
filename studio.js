@@ -17,6 +17,26 @@ const STUDIO = (function () {
   const pct = (a, b) => Math.round(a / ((a + b) || 1) * 100);
   const fmtXg = x => x.toFixed(2);
 
+
+  /* ---------- Dark Arts Warriors: personality lines ---------- */
+  const DARK = ['Oliver Kahn','Pepe','Sergio Ramos','Jaap Stam','Kyle Walker','Alphonso Davies','Patrick Vieira','Frank Rijkaard','Luis Suárez','Didier Drogba','Zlatan Ibrahimović'];
+  const darkCount = team => team.xi.filter(id => id != null && PL[id] && DARK.includes(PL[id].name)).length;
+  const TRAIT = {
+    'Oliver Kahn': { tackle: [], save: ['${n} roars at his back line and keeps it out.', '${n} stares the striker down, and wins.'], goalAgainst: '${n} is screaming at his defence. You can hear him from the stands.' },
+    'Pepe': { tackle: ['${n} goes in with everything. The referee reaches for the notebook, then thinks better of it.', '${n} makes his presence felt. ${v} will remember that one.'], foul: '${n} leaves a reminder on ${v}.' },
+    'Sergio Ramos': { tackle: ['${n} leads by example, and ${v} is on the floor.', 'Captain ${n} clatters in. Fair? Debatable. Effective? Absolutely.'], foul: 'Captain ${n} again. He knows exactly how far to go.', header: 'Who else but ${n}? A captain\'s header.' },
+    'Jaap Stam': { tackle: ['${n} slides in and wins it cleanly. Old school defending.', '${v} thought there was space. ${n} had other ideas.'] },
+    'Kyle Walker': { beat: ['${n} simply runs past ${v}. Nobody catches him.', 'Pace! ${n} is gone down the right and ${v} can only watch.'], tackle: ['${n} recovers in a flash and steals it.'] },
+    'Alphonso Davies': { beat: ['${n} burns ${v}! Pure speed.', 'Wing-back ${n} flies past ${v} like he was standing still.'] },
+    'Patrick Vieira': { tackle: ['${n} steps in, all legs and authority.', '${n} dominates the middle. ${v} had no chance.'] },
+    'Frank Rijkaard': { tackle: ['${n} reads it and takes it with the calm of a man who has done this a thousand times.', 'Elegant, but ${n} still wins the ball.'] },
+    'Luis Suárez': { goal: ['That is ruthless from ${n}. Half a chance and he takes it.', '${n} smells blood and finishes it off. Cold.', 'Nothing wasted by ${n}. Ruthless.'], beat: ['${n} wriggles past ${v}.'] },
+    'Didier Drogba': { goal: ['${n} muscles it in. Defenders bounce off him like he is made of steel.', '${n} bullies his marker and buries it.', 'Strength, then finish. That is ${n}.'], header: 'Up goes ${n} and he wins everything in the air.' },
+    'Zlatan Ibrahimović': { goal: ['${n} scores, and you know he will tell everybody about it later.', 'Of course it is ${n}. He knew before the ball left the boot.', 'Confidence? ${n} has enough for the whole stadium.'], beat: ['${n} with a flick, a trick and a smirk past ${v}.'] }
+  };
+  const fillT = (s, n, v) => s.replace(/\$\{n\}/g, n).replace(/\$\{v\}/g, v || 'him');
+  const traitLine = (p, kind, v) => { if (!p) return null; const t = TRAIT[p.name]; if (!t || !t[kind]) return null; const x = t[kind]; return fillT(Array.isArray(x) ? (x.length ? pick(x) : null) : x, p.short, v); };
+
   /* ---------- team profiles (pre-match) ---------- */
   function profile(team) {
     const sl = FORMS[team.form];
@@ -72,6 +92,10 @@ const STUDIO = (function () {
     panel.push({ who: 'nadia', text: n });
     // Luca: stars
     panel.push({ who: 'luca', text: `It's ${a.star.short} against ${b.star.short}, no? But the game is decided by who gets the ball to the front men. ${a.creator.short} for ${nA}, ${b.creator.short} for ${nB}. Whoever of them has time on the ball, wins. ${a.from === b.from && a.to === b.to ? '' : `Also beautiful: football from ${Math.min(a.from, b.from)} to ${Math.max(a.to, b.to)} on one pitch.`}` });
+    [[A, nA], [B, nB]].forEach(([T, nm]) => { if (darkCount(T) >= 5) {
+      panel.push({ who: 'gerry', text: `${nm} are built to intimidate. Big characters, big frames, nobody who takes a backward step. I would not want to line up against that back line, let alone try to get past it.` });
+      panel.push({ who: 'luca', text: `It is not only the tackles. It is the mind games. ${nm} get into your head before the whistle, and by then half the game is already won. Be careful with the temper, though. One yellow too many and it turns.` });
+    } });
     const preds = ['gerry', 'nadia', 'luca'].map(w => ({ who: w, score: predScore(pr) }));
     return { a, b, prob: pr, panel, preds };
   }
@@ -109,9 +133,9 @@ const STUDIO = (function () {
           if (sh && res.players[sh.p].team === e.team) say(e, pick(['pbp', 'co']), pick([`Won back by ${nm(e.p)}, and ${tn(e.team)} break at speed!`, `Transition! ${nm(e.p)} wins it and they're away.`, `Turnover, and ${tn(e.team)} go straight for the throat.`]), 'transition', true);
           else if (R() < .12) say(e, 'pbp', `${nm(e.p)} wins it back for ${tn(e.team)}.`); break;
         }
-        case 'tackle': if (R() < .5) say(e, 'pbp', pick([`Superb challenge from ${nm(e.p)} on ${nm(e.v)}.`, `${nm(e.p)} with a perfectly timed tackle.`, `${nm(e.v)} runs into a wall called ${nm(e.p)}.`])); break;
+        case 'tackle': if (R() < .5) say(e, 'pbp', traitLine(P(e.p), 'tackle', nm(e.v)) || pick([`Superb challenge from ${nm(e.p)} on ${nm(e.v)}.`, `${nm(e.p)} with a perfectly timed tackle.`, `${nm(e.v)} runs into a wall called ${nm(e.p)}.`])); break;
         case 'intercept': if (R() < .14) say(e, 'pbp', pick([`${nm(e.p)} reads it and steps in.`, `Cut out by ${nm(e.p)}.`])); break;
-        case 'beat': if (R() < .35) say(e, 'pbp', pick([`${nm(e.p)} skips past ${nm(e.v)}!`, `Lovely feet from ${nm(e.p)}, ${nm(e.v)} left behind.`, `${nm(e.p)} drops the shoulder and he's through ${nm(e.v)}.`])); break;
+        case 'beat': if (R() < .35) say(e, 'pbp', traitLine(P(e.p), 'beat', nm(e.v)) || pick([`${nm(e.p)} skips past ${nm(e.v)}!`, `Lovely feet from ${nm(e.p)}, ${nm(e.v)} left behind.`, `${nm(e.p)} drops the shoulder and he's through ${nm(e.v)}.`])); break;
         case 'cross': say(e, 'pbp', pick([`${nm(e.p)} whips it in...`, `${nm(e.p)} looks up, crosses...`, `Ball in from ${nm(e.p)}...`])); break;
         case 'longball': if (R() < .4) say(e, 'pbp', `${nm(e.p)} goes long, looking for ${nm(e.to)}.`); break;
         case 'shot': {
@@ -124,7 +148,7 @@ const STUDIO = (function () {
           else t = pick([`${nm(e.p)} shoots!`, `Chance for ${nm(e.p)}!`, `${nm(e.p)}, room to shoot...`]);
           say(e, 'pbp', t, 'shot', true); break;
         }
-        case 'save': say(e, 'pbp', e.held ? pick([`Saved, and held by ${nm(e.p)}.`, `${nm(e.p)} gathers it comfortably.`]) : pick([`Great save from ${nm(e.p)}!`, `${nm(e.p)} beats it away!`, `Fingertips from ${nm(e.p)}!`]) + (e.corner ? ' Corner.' : ''), 'save', true);
+        case 'save': say(e, 'pbp', !e.held && R() < .5 && traitLine(P(e.p), 'save') ? traitLine(P(e.p), 'save') : e.held ? pick([`Saved, and held by ${nm(e.p)}.`, `${nm(e.p)} gathers it comfortably.`]) : pick([`Great save from ${nm(e.p)}!`, `${nm(e.p)} beats it away!`, `Fingertips from ${nm(e.p)}!`]) + (e.corner ? ' Corner.' : ''), 'save', true);
           if (e.xg > .25 && e.t - lastCo > 25) { lastCo = e.t; out.push({ t: e.t + 2.5, f: e.f + 25, min: e.min, who: 'co', text: `That was a ${fmtXg(e.xg)} xG chance. ${nm(e.p)} has kept them in it.`, kind: 'colour' }); } break;
         case 'miss': if (e.deflected) break; say(e, 'pbp', e.over ? pick(['Over the bar.', 'Blazed over!', 'Into the crowd.']) : pick(['Wide.', 'Just past the post!', 'Off target.']), 'miss', true);
           if (e.xg > .3 && e.t - lastCo > 25) { lastCo = e.t; out.push({ t: e.t + 2.5, f: e.f + 25, min: e.min, who: 'co', text: pick([`He'll be having nightmares about that one. ${fmtXg(e.xg)} xG.`, `How has that not gone in?`]), kind: 'colour' }); } break;
@@ -135,7 +159,9 @@ const STUDIO = (function () {
           const who = e.og ? `Own goal! Off ${nm(e.p)}.` : pick([`GOAL! ${nm(e.p)}!`, `${nm(e.p).toUpperCase()}! WHAT A FINISH!`, `It's in! ${nm(e.p)}!`]);
           say(e, 'pbp', `${who} ${lead}`, 'goal', true);
           let co = '';
-          if (e.counter) co = `That's the transition. Won it back and within seconds it's in the net. That's what hurts you.`;
+          const tl = !e.og && (e.kind === 'header' && traitLine(P(e.p), 'header')) || (!e.og && traitLine(P(e.p), 'goal'));
+          if (tl) co = tl;
+          else if (e.counter) co = `That's the transition. Won it back and within seconds it's in the net. That's what hurts you.`;
           else if (e.kind === 'header') co = `Brilliant movement in the box and a powerful header.`;
           else if (e.kind === 'pen') co = `Cool as you like from the spot.`;
           else if (e.kind === 'fk') co = `Free-kick genius. Nothing the keeper could do.`;
@@ -148,7 +174,7 @@ const STUDIO = (function () {
           if (e.pen) say(e, 'pbp', `PENALTY! ${nm(e.p)} brings down ${nm(e.v)} in the box!`, 'pen', true);
           else if (e.card === 'yellow') say(e, 'pbp', `${nm(e.p)} goes into the book for that on ${nm(e.v)}.`, 'card', true);
           else if (e.card === 'lucky') say(e, 'co', `${nm(e.p)} was already on a yellow. He's lucky to still be on the pitch.`, 'card', true);
-          else if (R() < .25) say(e, 'pbp', `Free kick. ${nm(e.p)} catches ${nm(e.v)}.`); break;
+          else if (R() < .25) say(e, 'pbp', traitLine(P(e.p), 'foul', nm(e.v)) || `Free kick. ${nm(e.p)} catches ${nm(e.v)}.`); break;
         case 'freekick': if (e.direct) say(e, 'co', `This is in range. ${nm(e.p)} fancies it.`, 'fk', true); break;
         case 'corner': if (R() < .5) say(e, 'pbp', `Corner to ${tn(e.team)}.`); break;
         case 'penalty': break;
