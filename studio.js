@@ -83,7 +83,7 @@ const STUDIO = (function () {
     else g += ` Where ${defBetter[3]} could be got at is pace: ${defBetter[2].defPace < 80 ? "they're not the quickest back line" : 'they need to hold their shape'}.`;
     panel.push({ who: 'gerry', text: g });
     // Nadia: formation and shape
-    let n = `${A.form} against ${B.form}. `;
+    let n = `${formLabel(A.form)} against ${formLabel(B.form)}. `;
     if (a.central !== b.central) { const [w, nw, l] = a.central > b.central ? [a, nA, b] : [b, nB, a]; n += `${nw} have ${w.central} in the middle against ${l.central}, so expect them to win the central overload and dominate the ball.`; }
     else n += `Same numbers in central midfield, so this could come down to who wins the wide areas.`;
     const paceGap = [a.attPace - b.defPace, b.attPace - a.defPace];
@@ -126,14 +126,25 @@ const STUDIO = (function () {
       }
       switch (e.type) {
         case 'ko': say(e, 'pbp', pick([`And we're under way! ${tn(0)} against ${tn(1)}.`, `Kick-off! ${tn(0)} versus ${tn(1)}, legends everywhere you look.`]), 'ko', true);
-          out.push({ t: e.t + 3, f: e.f + 30, min: .5, who: 'co', text: `${res.teams[0].form} against ${res.teams[1].form}. Let's see who blinks first.`, kind: 'colour' }); lastT = e.t + 3; break;
+          out.push({ t: e.t + 3, f: e.f + 30, min: .5, who: 'co', text: `${formLabel(res.teams[0].form)} against ${formLabel(res.teams[1].form)}. Let's see who blinks first.`, kind: 'colour' }); lastT = e.t + 3; break;
         case 'turnover': {
           if (e.t - lastTurn < 8) break; lastTurn = e.t;
           const sh = next(i, ['shot'], 12);
           if (sh && res.players[sh.p].team === e.team) say(e, pick(['pbp', 'co']), pick([`Won back by ${nm(e.p)}, and ${tn(e.team)} break at speed!`, `Transition! ${nm(e.p)} wins it and they're away.`, `Turnover, and ${tn(e.team)} go straight for the throat.`]), 'transition', true);
           else if (R() < .12) say(e, 'pbp', `${nm(e.p)} wins it back for ${tn(e.team)}.`); break;
         }
-        case 'tackle': if (R() < .5) say(e, 'pbp', traitLine(P(e.p), 'tackle', nm(e.v)) || pick([`Superb challenge from ${nm(e.p)} on ${nm(e.v)}.`, `${nm(e.p)} with a perfectly timed tackle.`, `${nm(e.v)} runs into a wall called ${nm(e.p)}.`])); break;
+        case 'skill': {
+          const k = e.k, v = e.v >= 0 ? nm(e.v) : null, n = nm(e.p);
+          const L = { cro: [`La Croqueta from ${n}! Ball shifted foot to foot${v ? `, and ${v} is left grabbing at air` : ''}.`, `${n} with the Iniesta shuffle. Croqueta, gone.`],
+            rou: [`Marseille turn! ${n} spins right round${v ? ` ${v}` : ''}!`, `The roulette from ${n}. Zidane would be proud.`],
+            step: [`Stepover, stepover, ${n}${v ? ` and ${v} doesn't know which way he's facing` : ' just dancing on the ball'}!`, `${n} with the stepovers. Pure showboating, and it works.`],
+            ela: [`ELASTICO! ${n} flicks it out and back in${v ? `, ${v} completely done` : ''}!`, `Ronaldinho stuff from ${n}. The elastico!`],
+            flick: [`RAINBOW FLICK! ${n} lifts it over ${v || 'his man'}!`, `Oh, the cheek of it. Rainbow flick from ${n}!`],
+            cru: [`The Cruyff turn from ${n}${v ? `, ${v} sent the wrong way` : ''}.`, `${n} drags it back, Cruyff turn, and he's away.`] };
+          if (L[k] && R() < .8) say(e, 'pbp', pick(L[k]), 'skill', R() < .5); break;
+        }
+        case 'tackle': if (e.slide && R() < .45) { say(e, 'pbp', pick([`Two-footed slide from ${nm(e.p)}, and he takes the ball clean!`, `${nm(e.p)} goes to ground, both feet, and wins it.`, `What a slide tackle from ${nm(e.p)}! ${nm(e.v)} is on the floor.`])); break; }
+          if (R() < .5) say(e, 'pbp', traitLine(P(e.p), 'tackle', nm(e.v)) || pick([`Superb challenge from ${nm(e.p)} on ${nm(e.v)}.`, `${nm(e.p)} with a perfectly timed tackle.`, `${nm(e.v)} runs into a wall called ${nm(e.p)}.`])); break;
         case 'intercept': if (R() < .14) say(e, 'pbp', pick([`${nm(e.p)} reads it and steps in.`, `Cut out by ${nm(e.p)}.`])); break;
         case 'beat': if (R() < .35) say(e, 'pbp', traitLine(P(e.p), 'beat', nm(e.v)) || pick([`${nm(e.p)} skips past ${nm(e.v)}!`, `Lovely feet from ${nm(e.p)}, ${nm(e.v)} left behind.`, `${nm(e.p)} drops the shoulder and he's through ${nm(e.v)}.`])); break;
         case 'cross': say(e, 'pbp', pick([`${nm(e.p)} whips it in...`, `${nm(e.p)} looks up, crosses...`, `Ball in from ${nm(e.p)}...`])); break;
@@ -172,7 +183,8 @@ const STUDIO = (function () {
         }
         case 'foul':
           if (e.pen) say(e, 'pbp', `PENALTY! ${nm(e.p)} brings down ${nm(e.v)} in the box!`, 'pen', true);
-          else if (e.card === 'yellow') say(e, 'pbp', `${nm(e.p)} goes into the book for that on ${nm(e.v)}.`, 'card', true);
+          else if (e.card === 'yellow') say(e, 'pbp', e.two ? `Two-footed lunge from ${nm(e.p)}! That's a yellow, and he can count himself lucky.` : `${nm(e.p)} goes into the book for that on ${nm(e.v)}.`, 'card', true);
+          else if (e.two && R() < .6) say(e, 'pbp', pick([`Both feet off the ground from ${nm(e.p)}. ${nm(e.v)} goes flying.`, `Reckless, two-footed from ${nm(e.p)}. Free kick.`]), 'foul', true);
           else if (e.card === 'lucky') say(e, 'co', `${nm(e.p)} was already on a yellow. He's lucky to still be on the pitch.`, 'card', true);
           else if (R() < .25) say(e, 'pbp', traitLine(P(e.p), 'foul', nm(e.v)) || `Free kick. ${nm(e.p)} catches ${nm(e.v)}.`); break;
         case 'freekick': if (e.direct) say(e, 'co', `This is in range. ${nm(e.p)} fancies it.`, 'fk', true); break;

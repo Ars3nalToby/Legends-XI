@@ -19,7 +19,7 @@ const SIM = (function () {
       return {
         team: t, i, idx: t * 11 + i, slot: s[0], sx: s[1], sy: s[2], d: p, gk,
         pac: p.s[0] * m, sho: gk ? 40 : p.s[1] * m, pas: gk ? p.s[3] : p.s[2] * m, def: gk ? 60 : p.s[3] * m, ovr: p.ovr * m,
-        x: 0, y: 0, vx: 0, vy: 0, fcx: 0, fcy: 1, cd: 0, stun: 0, think: 0, hold: 0, run: null, runCD: rng() * 4,
+        x: 0, y: 0, vx: 0, vy: 0, fcx: 0, fcy: 1, cd: 0, stun: 0, think: 0, hold: 0, run: null, runCD: rng() * 4, act: null, skill: null, scd: 0, tg: null, tT: 0, mark: null,
         st: { pass: 0, passOk: 0, shots: 0, sot: 0, goals: 0, ast: 0, kp: 0, tkl: 0, int: 0, saves: 0, fouls: 0, yc: 0, touches: 0, drb: 0, conceded: 0 }
       };
     });
@@ -252,27 +252,46 @@ const SIM = (function () {
   /* ---------- AI ---------- */
   function tackle(def, own) {
     def.cd = 1.35;
-    const pr = clamp(.22 + (def.def - (own.pac + own.pas) / 2) / 260, .06, .6);
-    if (rng() < pr) { def.st.tkl++; M.stats[def.team].tkl++; gain(def, 'tackle'); ev('tackle', { p: pk(def), v: pk(own) }); return; }
-    if (rng() < .13) { foul(def, own); return; }
+    const d = hyp(own.x - def.x, own.y - def.y) || .01, slide = d > 1.05;
+    def.act = { k: slide ? 'slide' : 'poke', t: 0, dur: slide ? .52 : .32 }; if (slide) { def.vx = (own.x - def.x) / d * 7.5; def.vy = (own.y - def.y) / d * 7.5; } def.fcx = (own.x - def.x) / d; def.fcy = (own.y - def.y) / d;
+    if (own.skill) { def.stun = .45; own.st.drb++; ev('beat', { p: pk(own), v: pk(def), sk: own.skill.k }); return; }
+    const pr = clamp(.22 + (def.def - (own.pac + own.pas) / 2) / 260 + (slide ? .07 : 0), .06, .66);
+    if (rng() < pr) { def.st.tkl++; M.stats[def.team].tkl++; gain(def, 'tackle'); ev('tackle', { p: pk(def), v: pk(own), slide }); return; }
+    if (rng() < (slide ? .16 : .1)) { foul(def, own, slide); return; }
     def.stun = .35; if (rng() < .35) { own.st.drb++; ev('beat', { p: pk(own), v: pk(def) }); }
   }
-  function foul(def, own) {
+  // skill moves for whoever has the ball: wrong-foots defenders within reach, can't be tackled mid-move
+  function startSkill(p, k) {
+    const [o] = nearest(M.teams[1 - p.team], p.x, p.y), d = dir(p.team);
+    let fx = (CX - p.x) * .012, fy = d; const n = hyp(fx, fy); fx /= n; fy /= n;
+    p.skill = skillSetup(k, fx, fy, o ? o.x - p.x : 0, o ? o.y - p.y : 0); p.scd = 4;
+    const tech = (p.pas + p.pac) / 2, sk = SKILLS[k]; let v = null;
+    for (const q of M.teams[1 - p.team]) { if (q.gk) continue; const dd = hyp(q.x - p.x, q.y - p.y); if (dd < 3) { if (rng() < clamp(.38 + (tech - q.def) / 120 + sk.beat, .18, .66)) { q.stun = Math.max(q.stun, sk.dur * .6); v = v || q; } } }
+    ev('skill', { p: pk(p), k, v: pk(v) });
+  }
+  function skillStep(p, dt) {
+    const s = p.skill; s.t += dt; const u = Math.min(1, s.t / s.dur), m = skillMove(s, u);
+    p.vx = m[0]; p.vy = m[1]; p.fcx = m[2]; p.fcy = m[3];
+    if (s.t >= s.dur) { p.skill = null; p.fcx = s.ex; p.fcy = s.ey; const v = jog(p) * 1.12; p.vx = s.ex * v; p.vy = s.ey * v; }
+  }
+  function foul(def, own, twoFooted) {
     def.st.fouls++; M.stats[def.team].fouls++;
-    let card = null; if (rng() < .22) { if (def.st.yc) card = 'lucky'; else { def.st.yc = 1; card = 'yellow'; M.stats[def.team].yc++; } }
+    let card = null; if (rng() < (twoFooted ? .45 : .22)) { if (def.st.yc) card = 'lucky'; else { def.st.yc = 1; card = 'yellow'; M.stats[def.team].yc++; } }
     const pen = inAttBox(own, own.team);
-    ev('foul', { p: pk(def), v: pk(own), card, pen });
+    ev('foul', { p: pk(def), v: pk(own), card, pen, two: !!twoFooted });
     if (pen) penalty(own.team); else freeKick(own.team, clamp(own.x, 1, W - 1), clamp(own.y, 1, L - 1));
   }
   function ownerAI(p, dt) {
     const t = p.team, d = dir(t), gy = oppGoalY(t);
     if (M.firstTime && M.firstTime.p === p) { const h = M.firstTime.header; M.firstTime = null; shoot(p, .7, gauss() * .8, h ? 'header' : 'volley'); return; }
     if (p.gk) { p.hold -= dt; accelTo(p, 0, 0, dt); if (p.hold <= 0) { if (rng() < .3) { const fw = outfield(t).reduce((a, c) => c.sy > a.sy ? c : a); lob(p, fw.x, fw.y + d * 3, fw, 'long', 9); ev('longball', { p: pk(p), to: pk(fw) }); } else if (!pass(p, .1, false)) lob(p, CX, L / 2, null, 'long', 9); } return; }
+    if (p.skill) { skillStep(p, dt); return; }
     const [no, nd] = nearest(M.teams[1 - t], p.x, p.y);
     const dist = hyp(p.x - CX, p.y - gy), angOk = Math.abs(p.x - CX) < 6 + dist * .7;
     p.think -= dt;
     if (p.think <= 0) {
       p.think = .32 + rng() * .45 - (p.pas - 75) / 450;
+      if (nd < 3 && (p.scd || 0) <= 0 && dist > 9 && rng() < clamp((p.pac + p.pas - 160) / 300, .02, .1)) { startSkill(p, SKILL_KEYS[(rng() * SKILL_KEYS.length) | 0]); return; }
       const xg = xgOf(p.x, p.y, t, 'shot');
       if (dist < 32 && angOk && rng() < clamp(xg * 5 + .1 + (dist < 13 ? .3 : 0), .08, .92) * (p.sho / 86)) { shoot(p, .55 + rng() * .33, gauss() * .9); return; }
       const wide = p.x < 16 || p.x > W - 16, final3 = Math.abs(p.y - gy) < 34;
@@ -309,6 +328,7 @@ const SIM = (function () {
     M.t += dt;
     if (M.pause > 0) {
       M.pause -= dt;
+      for (const p of M.all) if (p.act && (p.act.t += dt) >= p.act.dur) p.act = null;
       if (M.celebrate) { const c = M.celebrate; moveTo(c.p, c.x, c.y, 7, dt); for (const q of M.teams[c.p.team]) if (q !== c.p && !q.gk) moveTo(q, c.p.x + (q.i % 3 - 1) * 1.4, c.p.y + (q.i % 2 ? 1.2 : -1.2), 6.5, dt, 1); for (const q of M.teams[1 - c.p.team]) accelTo(q, 0, 0, dt); integrate(dt); }
       else for (const p of M.all) accelTo(p, 0, 0, dt);
       if (M.pause <= 0) {
@@ -322,13 +342,14 @@ const SIM = (function () {
     if (!M.swap && M.t >= M.dur / 2) { M.swap = true; ev('ht', { score: M.score.slice() }); kickoff(1); M.pause = 2; return; }
     if (b.owner) M.poss[b.owner.team] += dt; else if (M.possTeam >= 0) M.poss[M.possTeam] += dt * .5;
     b.npT -= dt;
-    for (const p of M.all) { p.cd -= dt; p.stun -= dt; p.runCD -= dt; }
+    for (const p of M.all) { p.cd -= dt; p.stun -= dt; p.runCD -= dt; if (p.scd > 0) p.scd -= dt; if (p.skill && b.owner !== p) p.skill = null; if (p.act && (p.act.t += dt) >= p.act.dur) p.act = null; }
     const own = b.owner, ot = own ? own.team : -1;
     // final-third entry lanes
     if (own && !own.gk) { const f3 = Math.abs(own.y - oppGoalY(ot)) < 35; if (f3 && !M.inF3[ot]) { M.inF3[ot] = true; let lane = own.x < W / 3 ? 0 : own.x > 2 * W / 3 ? 2 : 1; if (dir(ot) < 0) lane = 2 - lane; M.stats[ot].lanes[lane]++; } if (!f3) M.inF3[ot] = false; }
     const tgtX = b.x + b.vx * .3, tgtY = b.y + b.vy * .3;
     teamAI(dt);
     for (const p of M.all) {
+      if (p.act && p.act.k === 'slide' && own !== p) { const k = Math.exp(-dt * 2.6); p.vx *= k; p.vy *= k; continue; }
       if (p.stun > 0) { accelTo(p, 0, 0, dt); continue; }
       if (p.gk && own !== p) { gkAI(p, dt); continue; }
       if (own === p) { ownerAI(p, dt); continue; }
@@ -360,7 +381,7 @@ const SIM = (function () {
       if (d < 1.05 && d > .001) { const push = (1.05 - d) / 2, nx = dx / d, ny = dy / d; if (b.owner !== a) { a.x -= nx * push; a.y -= ny * push; } if (b.owner !== c) { c.x += nx * push; c.y += ny * push; } }
     }
   }
-  function ballFollow() { const b = M.ball, p = b.owner; b.x = clamp(p.x + p.fcx * .72, .1, W - .1); b.y = clamp(p.y + p.fcy * .72, .1, L - .1); b.z = 0; b.vx = p.vx; b.vy = p.vy; }
+  function ballFollow() { const b = M.ball, p = b.owner, fl = p.skill && skillBall(p.skill, Math.min(1, p.skill.t / p.skill.dur)), off = fl ? fl[0] : .72, fx = fl ? p.skill.fx : p.fcx, fy = fl ? p.skill.fy : p.fcy; b.x = clamp(p.x + fx * off, .1, W - .1); b.y = clamp(p.y + fy * off, .1, L - .1); b.z = fl ? fl[1] : 0; b.vx = p.vx; b.vy = p.vy; }
   function ballUpdate(dt) {
     const b = M.ball;
     if (b.owner) { ballFollow(); return; }
@@ -375,7 +396,7 @@ const SIM = (function () {
       const gk = M.teams[1 - b.shotTeam].find(q => q.gk), d = hyp(gk.x - b.x, gk.y - b.y), reach = 1.75 + (gk.ovr - 80) * .045;
       if (d < reach && b.z < 2.7) {
         b.gkRolled = true; const si = b.shotInfo;
-        let pr = .7 + (gk.ovr - 86) * .025 - (sp - 22) * .018 - b.shotQ * .3 + (d < .9 ? .15 : 0) + (si && si.kind === 'header' ? .08 : 0);
+        let pr = .75 + (gk.ovr - 86) * .025 - (sp - 22) * .018 - b.shotQ * .3 + (d < .9 ? .15 : 0) + (si && si.kind === 'header' ? .08 : 0);
         if (si && si.kind === 'pen') pr = .24 + (gk.ovr - 86) * .02;
         pr = clamp(pr, .06, .94);
         if (rng() < pr) {
@@ -439,10 +460,11 @@ const SIM = (function () {
     kickoff(0); ev('ko', {});
     const nFrames = Math.ceil(M.dur * FR) + 2, STR = 22 * 3 + 4;
     const frames = new Float32Array(nFrames * STR), clock = new Float32Array(nFrames), score = new Uint8Array(nFrames * 2), cut = new Uint8Array(nFrames), poss = new Int8Array(nFrames);
+    const actK = new Uint8Array(nFrames * 22), actU = new Uint8Array(nFrames * 22);   // per player per frame: action code (see ACT_CODE) and progress 0-255
     let f = 0, s = 0;
     const rec = () => {
       if (f >= nFrames) return; const o = f * STR;
-      for (const p of M.all) { const k = o + p.idx * 3; frames[k] = p.x; frames[k + 1] = p.y; frames[k + 2] = Math.atan2(p.fcx, p.fcy); }
+      for (const p of M.all) { const k = o + p.idx * 3; frames[k] = p.x; frames[k + 1] = p.y; frames[k + 2] = Math.atan2(p.fcx, p.fcy); const a = p.skill || p.act; if (a) { actK[f * 22 + p.idx] = ACT_CODE[a.k]; actU[f * 22 + p.idx] = Math.min(255, Math.round(a.t / a.dur * 255)); } }
       const b = M.ball, k = o + 66; frames[k] = b.x; frames[k + 1] = b.y; frames[k + 2] = b.z; frames[k + 3] = b.owner ? b.owner.idx : -1;
       clock[f] = minute(); score[f * 2] = M.score[0]; score[f * 2 + 1] = M.score[1]; cut[f] = M.cut ? 1 : 0; poss[f] = M.possTeam; M.cut = false; f++;
     };
@@ -464,7 +486,7 @@ const SIM = (function () {
     }
     const totalPoss = (M.poss[0] + M.poss[1]) || 1;
     const out = {
-      seed: seedVal, dur: M.dur, fr: FR, stride: STR, nFrames: f, frames, clock, score, cut, poss,
+      seed: seedVal, dur: M.dur, fr: FR, stride: STR, nFrames: f, frames, clock, score, cut, poss, actK, actU,
       final: M.score.slice(), events: M.events,
       stats: M.stats.map((s, i) => Object.assign({}, s, { poss: Math.round(M.poss[i] / totalPoss * 100), xg: Math.round(s.xg * 100) / 100 })),
       players: M.all.map(p => ({ idx: p.idx, team: p.team, slot: p.slot, id: p.d.id, name: p.d.name, short: p.d.short, ovr: Math.round(p.ovr), gk: p.gk, rating: p.rating, st: Object.assign({}, p.st) })),

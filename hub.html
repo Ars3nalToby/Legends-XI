@@ -101,8 +101,9 @@ footer{padding-block:30px;color:var(--muted);font-size:14px}
 <nav class="nav"><div class="wrap">
   <a class="brand" href="https://thenonnegotiablog.com" rel="noopener">The <b>Non-Negotiables</b></a>
   <a class="l on" href="/hub.html">Hub</a>
-  <a class="l" href="/">Head-to-Head</a>
-  <a class="l" href="/solo.html">XI builder</a>
+  <a class="l" href="/">Play solo</a>
+  <a class="l" href="/#squad">XI builder</a>
+  <a class="l" href="/h2h.html">Head-to-Head</a>
   <a class="l" href="https://thenonnegotiablog.com/timetable.html" rel="noopener">EPL timetable</a>
   <a class="l" href="https://thenonnegotiablog.com/factory.html" rel="noopener">Factory</a>
 </div></nav>
@@ -193,7 +194,7 @@ function renderFixtures(){
       </div>
       <div><span class="eyebrow">Kick-off in</span><div class="count" id="cd" aria-live="off"></div>
         <div class="muted" style="font-size:14px">Alarm suggestion: ${hm(wake,BNE)} Brisbane time, ${esc(wd(wake,BNE))}</div></div>
-      <div class="row"><button class="btn red" id="ics">Add to calendar</button><a class="btn" href="/">Pick your XI to face them</a></div>
+      <div class="row"><button class="btn red" id="ics">Add to calendar</button><a class="btn" href="/#squad">Pick your XI to face them</a></div>
     </div>`;
   $('#ics').onclick=()=>downloadIcs(f);
   const cd=$('#cd');
@@ -230,7 +231,7 @@ function renderLegend(){
     <div class="muted">${esc(p.pos)} · ${esc(p.nat)} · ${esc(eraLabel(p))} · Arsenal</div>
     ${NOTES[p.name]?`<p style="margin:10px 0 0">${esc(NOTES[p.name])}</p>`:''}</div></div>
     <div class="stats">${p.s.map((v,i)=>`<div><b>${v}</b><span>${lbl[i]}</span></div>`).join('')}</div>
-    <div class="row" style="margin-top:14px"><a class="btn red" href="/solo.html">Put him in my XI</a>
+    <div class="row" style="margin-top:14px"><a class="btn red" href="/#squad">Put him in my XI</a>
     <span class="muted" style="font-size:14px">${new Set(PL.filter(x=>x.ars).map(x=>x.id)).size} Gunners in the game, one new face every week.</span></div>`}
 
 /* ============ WEEKLY CHALLENGE ============ */
@@ -245,7 +246,7 @@ const RULES=[
   {id:'gunners6', title:()=>'Six and Six',             text:()=>'At least 6 Gunners and at least 4 players who never played for Arsenal.',test:(ps)=>ps.filter(p=>p.ars).length>=6&&ps.filter(p=>!p.ars).length>=4,pick:()=>(p,ps,n)=>{const a=ps.filter(x=>x.ars).length,o=ps.length-a;return p.ars?a<7:o<5}}
 ];
 function maxCount(a){const m={};let b=0;a.forEach(x=>{m[x]=(m[x]||0)+1;if(m[x]>b)b=m[x]});return b}
-const FKEYS=Object.keys(FORMS);
+const FKEYS=['4-3-3','4-4-2','4-2-3-1','3-4-1-2','3-5-2'];
 function challengeOf(k){
   const ri=k%RULES.length,round=Math.floor(k/RULES.length);
   return {rule:RULES[ri],k:{d:round%DECS.length},form:FKEYS[(k+round)%FKEYS.length]}}
@@ -293,7 +294,7 @@ function renderChallenge(){const CH=CH0;
     <div class="row"><div class="score">${r.score}</div><span class="muted">OVR ${r.st.ovr} · Chem ${r.st.chem}</span><span class="pill ${r.pass?'ok':'bad'}">${r.pass?'Challenge passed':'Not passing yet'}</span></div>`;
     window.__lastResult=r;
   }
-  body+=`<div class="row" style="margin-top:14px"><button class="btn red" id="chAuto">Build me a legal XI</button><a class="btn" href="/solo.html">Edit in the builder</a>${sq?'<button class="btn" id="chShare">Copy my result</button>':''}</div>`;
+  body+=`<div class="row" style="margin-top:14px"><button class="btn red" id="chAuto">Build me a legal XI</button><a class="btn" href="/#squad">Edit in the builder</a>${sq?'<button class="btn" id="chShare">Copy my result</button>':''}</div>`;
   $('#chCard').innerHTML=body;
   $('#chAuto').onclick=()=>{const b=autoBuild();store.set('lxi.squad',b);renderChallenge();toast('Legal XI saved. Edit it in the builder if you like.')};
   const sh=$('#chShare');if(sh)sh.onclick=async()=>{const t=shareText(evalXI(loadSquad()));try{if(navigator.share){await navigator.share({text:t});return}}catch(e){if(e&&e.name==='AbortError')return}

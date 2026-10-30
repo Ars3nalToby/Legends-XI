@@ -6,7 +6,7 @@ const PITCH = (function () {
   'use strict';
   const CSS = `
 .pt-wrap{display:flex;flex-direction:column;gap:10px}
-.pth{display:grid;grid-template-columns:auto 1fr;gap:6px 16px;align-items:end;padding:2px 2px 0}
+.pth{display:flex;flex-wrap:wrap;justify-content:space-between;gap:8px 14px;align-items:flex-end;padding:2px 2px 0}
 .pth .shape{font-family:var(--display,'Arial Narrow',Impact,sans-serif);font-weight:800;font-size:clamp(40px,12vw,58px);line-height:.82;letter-spacing:.01em;display:flex;align-items:flex-end;gap:2px;color:var(--fg,#eef4ef)}
 .pth .shape i{font-style:normal;color:var(--brass,#d8b462);font-size:.5em;margin:0 3px .12em;opacity:.8}
 .pth .shape small{display:none;font-size:11px;letter-spacing:.2em;color:var(--muted,#93a99c);font-weight:700;margin-bottom:7px;margin-left:8px;text-transform:uppercase}
@@ -14,7 +14,8 @@ const PITCH = (function () {
 .pth .pkk{text-align:right;line-height:1}
 .pth .pkk b{display:block;font-family:var(--display,'Arial Narrow',Impact,sans-serif);font-weight:800;font-size:21px;font-variant-numeric:tabular-nums}
 .pth .pkk span{font-size:10px;letter-spacing:.14em;color:var(--muted,#93a99c);text-transform:uppercase}
-.pth .bar{grid-column:1/-1;height:4px;border-radius:99px;background:#ffffff14;overflow:hidden}
+.pth .shape.long{font-size:clamp(34px,10vw,52px)}
+.pth .bar{flex:1 0 100%;height:4px;border-radius:99px;background:#ffffff14;overflow:hidden}
 .pth .bar i{display:block;height:100%;border-radius:99px;background:linear-gradient(90deg,var(--brass,#d8b462),var(--ok,#52d37f));transition:width .5s cubic-bezier(.2,.8,.2,1)}
 .pt{position:relative;width:100%;max-width:520px;margin:0 auto;aspect-ratio:68/108;border-radius:18px;overflow:hidden;isolation:isolate;
   background:
@@ -46,6 +47,13 @@ const PITCH = (function () {
 .ps.dragging{opacity:.3}
 .ps.over .tok{transform:scale(1.18);box-shadow:0 0 0 3px var(--brass,#d8b462),0 0 22px 2px var(--brass,#d8b462)}
 .pt-ghost{position:fixed;z-index:400;pointer-events:none;transform:translate(-50%,-62%) scale(1.15);filter:drop-shadow(0 12px 14px #000a)}
+.pth .shape em.cust{font-style:normal;font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:#241a05;background:var(--brass,#d8b462);border-radius:4px;padding:3px 6px 2px;margin:0 0 .5em 10px;align-self:flex-end;line-height:1}
+.pt .fw.sm{font-size:clamp(60px,20vw,110px)}
+.pt.drag-on{box-shadow:0 0 0 1px #ffffff55,0 0 0 5px #0b1812,0 0 0 6px var(--brass,#d8b462),0 26px 50px -22px #000}
+.pt.drag-on::before{background:repeating-linear-gradient(180deg,#ffffff0b 0 8.333%,#00000014 8.333% 16.666%),repeating-linear-gradient(90deg,#ffffff10 0 1px,transparent 1px 12.5%)}
+.pt-ghost .ps{position:static;transform:none;width:auto;max-width:none}
+.pt-ghost em{position:absolute;left:50%;top:100%;transform:translate(-50%,6px);white-space:nowrap;font-style:normal;font-family:var(--display,'Arial Narrow',Impact,sans-serif);font-weight:800;font-size:13px;letter-spacing:.08em;text-transform:uppercase;background:var(--brass,#d8b462);color:#241a05;padding:3px 8px 2px;border-radius:5px}
+.pt-reset{border:1px solid var(--brass,#d8b462);background:none;color:var(--brass,#d8b462);font:inherit;font-weight:700;border-radius:99px;padding:2px 10px;margin-left:4px;cursor:pointer}
 .pt-hint{font-size:12.5px;color:var(--muted,#93a99c);text-align:center;margin:0}
 @media (prefers-reduced-motion:reduce){.ps.empty .tok{animation:none}}
 `;
@@ -66,7 +74,8 @@ const PITCH = (function () {
     const groups = { D: [], M: [], A: [] };
     sl.forEach((s, i) => { const l = LINE[s[0]]; if (groups[l]) groups[l].push({ i, x: s[1] * 68, y: topOf(s) * .92, ty: topOf(s) }); });
     const counts = ['D', 'M', 'A'].map(l => groups[l].length);
-    const shape = `<div class="shape"><span>${counts[0]}</span><i>·</i><span>${counts[1]}</span><i>·</i><span>${counts[2]}</span><small>formation</small></div>`;
+    const lab = formLabel(o.form), cust = isCustom(o.form);
+    const shape = `<div class="shape${lab.length > 5 ? ' long' : ''}">${lab.split('-').map(n => `<span>${n}</span>`).join('<i>·</i>')}${cust ? '<em class="cust">custom</em>' : ''}</div>`;
     const shapeSvg = ['D', 'M', 'A'].map(l => { const g = groups[l].slice().sort((a, b) => a.x - b.x); return g.length > 1 ? `<polyline points="${g.map(p => p.x.toFixed(1) + ',' + p.y.toFixed(1)).join(' ')}" fill="none" stroke="#fff" stroke-opacity=".34" stroke-width=".3" stroke-dasharray="1.2 1.2" stroke-linecap="round"/>` : ''; }).join('');
     const rowCentre = ['D', 'M', 'A'].map(l => { const g = groups[l]; return g.length ? { l, y: g.reduce((a, p) => a + p.ty, 0) / g.length, n: g.length } : null; }).filter(Boolean);
     const labels = rowCentre.map(r => `<span class="rl" style="top:${r.y}%">${LINES[r.l]} ${r.n}</span>`).join('');
@@ -78,10 +87,10 @@ const PITCH = (function () {
     }).join('');
     const kp = `<div class="pkk"><b>${st.ovr || '–'}</b><span>OVR</span></div><div class="pkk"><b>${st.chem}<small style="font-size:14px;opacity:.6">/33</small></b><span>Chem</span></div><div class="pkk"><b>${st.n}<small style="font-size:14px;opacity:.6">/11</small></b><span>Picked</span></div>${st.gun ? `<div class="pkk"><b style="color:var(--red,#e3182c)">${st.gun}</b><span>Gunners</span></div>` : ''}`;
     return `<div class="pt-wrap"><div class="pth">${shape}<div class="pkps">${kp}</div><div class="bar"><i style="width:${Math.round(st.chem / 33 * 100)}%"></i></div></div>
-      <div class="pt" data-key="${esc(o.key)}" data-form="${esc(o.form)}" role="group" aria-label="${esc(o.form)} formation on the pitch">
+      <div class="pt" data-key="${esc(o.key)}" data-form="${esc(o.form)}" role="group" aria-label="${esc(lab)} formation on the pitch">
         <svg class="pl" viewBox="0 0 68 92" preserveAspectRatio="none" aria-hidden="true">${SVGLINES}${shapeSvg}</svg>
-        <div class="fw" aria-hidden="true">${counts.join('-')}</div>${labels}<div class="dir" aria-hidden="true">ATTACK ▲</div>${slots}
-      </div>${o.hint === false ? '' : '<p class="pt-hint">Tap a spot to pick a player · press and hold a player, then drag onto another spot to swap</p>'}</div>`;
+        <div class="fw${lab.length > 5 ? ' sm' : ''}" aria-hidden="true">${lab}</div>${labels}<div class="dir" aria-hidden="true">ATTACK ▲</div>${slots}
+      </div>${o.hint === false ? '' : `<p class="pt-hint">Tap a spot to pick a player · hold and drag onto a team-mate to swap, or onto open grass to move him there${cust ? ' · <button class="pt-reset" data-reset="${esc(o.key)}">Reset to ' + formBase(o.form) + '</button>' : ''}</p>`}</div>`;
   }
 
   /* ---- animation between renders: players glide to their new spots when the formation changes, and pop when newly picked ---- */
@@ -102,40 +111,44 @@ const PITCH = (function () {
   }
   new MutationObserver(sync).observe(document.documentElement, { childList: true, subtree: true });
 
-  /* ---- press-and-hold (touch) or drag (mouse) a player onto another spot to swap ---- */
+  /* ---- drag a player: onto another spot = swap; onto open grass = move him there (custom shape, role re-read from where he stands).
+     Mouse drags straight away; touch needs a short press-and-hold so normal scrolling still works. ---- */
   let D = null, blockClick = 0;
   const LONG = 260, MOVE = 8;
   function pickAt(x, y, pt) { const el = document.elementFromPoint(x, y); const s = el && el.closest && el.closest('.ps'); return s && pt.contains(s) ? s : null; }
-  function startDrag(e) {
-    if (!D || D.on) return; D.on = true; D.src.classList.add('dragging');
-    const tok = D.src.querySelector('.tok'), g = document.createElement('div'); g.className = 'pt-ghost'; g.appendChild(tok.cloneNode(true)); g.firstChild.style.width = tok.offsetWidth + 'px'; document.body.appendChild(g); D.ghost = g; move(D.x, D.y);
+  function grassAt(x, y, pt) { const r = pt.getBoundingClientRect(); if (x < r.left || x > r.right || y < r.top || y > r.bottom) return null; const fx = (x - r.left) / r.width, ty = (y - r.top) / r.height * 100; return { x: Math.min(.94, Math.max(.06, fx)), y: Math.min(.86, Math.max(.1, (90 - ty) / 99)) }; }
+  function begin(src, x, y, touch) { D = { src, pt: src.closest('.pt'), x, y, sx: x, sy: y, on: false, touch }; if (touch) D.timer = setTimeout(startDrag, LONG); }
+  function startDrag() {
+    if (!D || D.on) return; D.on = true; D.src.classList.add('dragging'); D.pt.classList.add('drag-on');
+    const tok = D.src.querySelector('.tok'), g = document.createElement('div'), w = document.createElement('div'); g.className = 'pt-ghost'; w.className = 'ps filled'; w.appendChild(tok.cloneNode(true)); w.firstChild.style.width = tok.offsetWidth + 'px'; g.appendChild(w);
+    const tag = document.createElement('em'); g.appendChild(tag); D.tag = tag; document.body.appendChild(g); D.ghost = g; move(D.x, D.y);
     try { navigator.vibrate && navigator.vibrate(12); } catch (_) { }
   }
   function move(x, y) {
     if (!D || !D.ghost) return; D.ghost.style.left = x + 'px'; D.ghost.style.top = y + 'px';
     const t = pickAt(x, y, D.pt); if (D.over && D.over !== t) D.over.classList.remove('over'); D.over = t && t !== D.src ? t : null; if (D.over) D.over.classList.add('over');
+    D.grass = !D.over && +D.src.dataset.i > 0 ? grassAt(x, y, D.pt) : null;
+    D.tag.textContent = D.over ? 'Swap' : D.grass ? 'Move · ' + roleAt(D.grass.x, D.grass.y) : '';
+    D.tag.style.display = D.tag.textContent ? '' : 'none';
   }
   function end(commit) {
     if (!D) return; clearTimeout(D.timer); const d = D; D = null;
-    document.removeEventListener('touchmove', stopScroll, { passive: false });
-    if (d.ghost) d.ghost.remove(); d.src.classList.remove('dragging'); if (d.over) d.over.classList.remove('over');
-    if (d.on) { blockClick = Date.now() + 350; if (commit && d.over && PITCH.onSwap) PITCH.onSwap(d.pt.dataset.key, +d.src.dataset.i, +d.over.dataset.i); }
+    if (d.ghost) d.ghost.remove(); d.src.classList.remove('dragging'); d.pt.classList.remove('drag-on'); if (d.over) d.over.classList.remove('over');
+    if (!d.on) return; blockClick = Date.now() + 350; if (!commit) return;
+    const key = d.pt.dataset.key, i = +d.src.dataset.i;
+    if (d.over && PITCH.onSwap) PITCH.onSwap(key, i, +d.over.dataset.i);
+    else if (d.grass && PITCH.onMove) PITCH.onMove(key, i, d.grass.x, d.grass.y);
   }
-  const stopScroll = e => { if (D && D.on) e.preventDefault(); };
-  document.addEventListener('pointerdown', e => {
-    const src = e.target.closest && e.target.closest('.pt .ps.filled'); if (!src || (e.pointerType === 'mouse' && e.button !== 0)) return;
-    D = { src, pt: src.closest('.pt'), x: e.clientX, y: e.clientY, sx: e.clientX, sy: e.clientY, on: false, id: e.pointerId, touch: e.pointerType !== 'mouse' };
-    if (D.touch) { D.timer = setTimeout(() => startDrag(), LONG); document.addEventListener('touchmove', stopScroll, { passive: false }); }
-  });
-  document.addEventListener('pointermove', e => {
-    if (!D || e.pointerId !== D.id) return; D.x = e.clientX; D.y = e.clientY;
-    if (!D.on) { if (Math.hypot(D.x - D.sx, D.y - D.sy) > MOVE) { if (D.touch) end(false); else startDrag(); } }
-    if (D && D.on) move(D.x, D.y);
-  });
-  document.addEventListener('pointerup', e => { if (D && e.pointerId === D.id) end(true); });
-  document.addEventListener('pointercancel', e => { if (D && e.pointerId === D.id) end(false); });
+  const SRC = '.pt .ps:not([data-i="0"])';
+  document.addEventListener('pointerdown', e => { if (e.pointerType !== 'mouse' || e.button !== 0) return; const s = e.target.closest && e.target.closest(SRC); if (s) begin(s, e.clientX, e.clientY, false); });
+  document.addEventListener('pointermove', e => { if (!D || D.touch) return; D.x = e.clientX; D.y = e.clientY; if (!D.on && Math.hypot(D.x - D.sx, D.y - D.sy) > MOVE) startDrag(); if (D.on) move(D.x, D.y); });
+  document.addEventListener('pointerup', e => { if (D && !D.touch) end(true); });
+  document.addEventListener('touchstart', e => { if (e.touches.length !== 1) { end(false); return; } const s = e.target.closest && e.target.closest(SRC); if (s) begin(s, e.touches[0].clientX, e.touches[0].clientY, true); }, { passive: true });
+  document.addEventListener('touchmove', e => { if (!D || !D.touch) return; const t = e.touches[0]; D.x = t.clientX; D.y = t.clientY; if (!D.on) { if (Math.hypot(D.x - D.sx, D.y - D.sy) > MOVE) end(false); return; } e.preventDefault(); move(D.x, D.y); }, { passive: false });
+  document.addEventListener('touchend', e => { if (D && D.touch) { if (D.on) e.preventDefault(); end(true); } }, { passive: false });
+  document.addEventListener('touchcancel', () => { if (D && D.touch) end(false); });
   document.addEventListener('click', e => { if (Date.now() < blockClick) { e.stopPropagation(); e.preventDefault(); } }, true);
   document.addEventListener('contextmenu', e => { if (e.target.closest && e.target.closest('.pt .ps')) e.preventDefault(); });
 
-  return { html, ensureStyle, sync, onSwap: null };
+  return { html, ensureStyle, sync, onSwap: null, onMove: null };
 })();

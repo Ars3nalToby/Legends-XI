@@ -15,7 +15,7 @@ const LIVE = (function () {
     M.dur = dur; M.clock = 0; M.half = false; M.score = [0, 0]; M.events = []; M.state = 'play'; M.pause = 0; M.after = null; M.banner = null; M.bannerId = 0;
     M.teams = teams.map((t, ti) => FORMS[t.form].map((s, i) => {
       const p = PL[t.xi[i]], f = fit(p, s[0]), m = f === 'nat' ? 1 : f === 'line' ? .95 : .86, gk = s[0] === 'GK';
-      return { team: ti, i, idx: ti * 11 + i, slot: s[0], fx: ti === 0 ? s[1] : 1 - s[1], fy: s[2], d: p, gk, pac: p.s[0] * m, sho: gk ? 40 : p.s[1] * m, pas: gk ? p.s[3] : p.s[2] * m, def: gk ? 60 : p.s[3] * m, ovr: p.ovr * m, x: 0, y: 0, vx: 0, vy: 0, fcx: 0, fcy: ti ? -1 : 1, cd: 0, stun: 0, hold: 0, run: null };
+      return { team: ti, i, idx: ti * 11 + i, slot: s[0], fx: ti === 0 ? s[1] : 1 - s[1], fy: s[2], d: p, gk, pac: p.s[0] * m, sho: gk ? 40 : p.s[1] * m, pas: gk ? p.s[3] : p.s[2] * m, def: gk ? 60 : p.s[3] * m, ovr: p.ovr * m, x: 0, y: 0, vx: 0, vy: 0, fcx: 0, fcy: ti ? -1 : 1, cd: 0, stun: 0, hold: 0, run: null, act: null, skill: null, scd: 0, tg: null, tT: 0, mark: null };
     }));
     M.all = M.teams[0].concat(M.teams[1]);
     M.ball = { x: CX, y: L / 2, z: 0, vx: 0, vy: 0, vz: 0, owner: null, last: null, np: null, npT: 0, rolled: new Set(), shot: false, shotTeam: -1, shotQ: 0, gkRolled: false, recv: null };
@@ -165,28 +165,29 @@ const LIVE = (function () {
     const [tx, ty] = M.formTarget(p); M.move(p, tx, ty, 6, dt, 1);
   };
   E.tackle = function (A, o) {
-    const M = this, d = hyp(o.x - A.x, o.y - A.y); A.cd = .8;
-    if (o.skill) { A.stun = .6; return; }
-    if (d < 2.3) { A.vx += (o.x - A.x) / d * 6; A.vy += (o.y - A.y) / d * 6; const pr = clamp(.46 + (A.def - o.pac * .6 - 30) / 160, .15, .8); if (rand() < pr) { M.gain(A); M.ball.x = A.x; M.ball.y = A.y; M.say('Tackle!', .7); } else A.stun = .55; }
-    else { A.vx += (o.x - A.x) / d * 3; A.vy += (o.y - A.y) / d * 3; }
+    const M = this, d = hyp(o.x - A.x, o.y - A.y) || .01; A.cd = .8;
+    const slide = d > 1.05; M.act(A, slide ? 'slide' : 'poke', (o.x - A.x) / d, (o.y - A.y) / d, slide ? 8.5 : 3);
+    if (o.skill) { A.stun = slide ? .75 : .6; return; }
+    if (d < (slide ? 2.6 : 2.3)) { const pr = clamp(.46 + (A.def - o.pac * .6 - 30) / 160 + (slide ? .04 : 0), .15, .82); if (rand() < pr) { M.gain(A); M.ball.x = A.x; M.ball.y = A.y; M.say(slide ? 'Two-footed slide!' : 'Tackle!', .7); } else A.stun = slide ? .8 : .55; }
   };
+  // visual + physical action: two-footed slide or standing poke. The player lunges, can't steer, and the 3D view animates it.
+  E.act = function (p, k, dx, dy, v) { p.act = { k, t: 0, dur: k === 'slide' ? .78 : .36 }; p.vx = dx * v; p.vy = dy * v; p.fcx = dx; p.fcy = dy; };
   /* ---- skill moves ----
      La Croqueta: quick shift of the ball from one foot to the other, sideways away from the nearest defender, then burst forward.
      Marseille turn / Roulette: 360° spin over the ball, rolling around the defender while shielding it.
      Defenders within reach are beaten (wrong-footed) on a skill-vs-defending roll; nobody can win the ball mid-move. */
   E.startSkill = function (A, k, I) {
     const M = this; let fx = I.wx, fy = I.wy, n = hyp(fx, fy); if (n < .15) { fx = A.fcx; fy = A.fcy; n = hyp(fx, fy) || 1; } fx /= n; fy /= n;
-    const [o] = M.near(M.teams[1 - A.team], A.x, A.y); let lx = -fy, ly = fx; if (o && ((o.x - A.x) * lx + (o.y - A.y) * ly) > 0) { lx = -lx; ly = -ly; }
-    A.skill = { k, t: 0, dur: k === 'cro' ? .34 : .62, fx, fy, lx, ly, spin: (lx * fy - ly * fx) > 0 ? -1 : 1 }; A.scd = 1.2;
-    const tech = (A.pas + A.pac) / 2;
-    for (const q of M.teams[1 - A.team]) { if (q.gk) continue; const d = hyp(q.x - A.x, q.y - A.y); if (d < 3) { const pr = clamp(.62 + (tech - q.def) / 90 - (k === 'rou' ? .05 : 0), .3, .92); if (rand() < pr) q.stun = Math.max(q.stun, k === 'cro' ? .55 : .75); } }
-    M.say('★ ' + (k === 'cro' ? 'La Croqueta' : 'Marseille turn'), .9);
+    const [o] = M.near(M.teams[1 - A.team], A.x, A.y);
+    A.skill = skillSetup(k, fx, fy, o ? o.x - A.x : 0, o ? o.y - A.y : 0); A.scd = 1.2;
+    const tech = (A.pas + A.pac) / 2, sk = SKILLS[k];
+    for (const q of M.teams[1 - A.team]) { if (q.gk) continue; const d = hyp(q.x - A.x, q.y - A.y); if (d < 3) { const pr = clamp(.62 + (tech - q.def) / 90 + sk.beat, .3, .92); if (rand() < pr) q.stun = Math.max(q.stun, sk.dur + .25); } }
+    M.say('★ ' + sk.name, .9);
   };
   E.skillStep = function (A, dt) {
-    const s = A.skill; s.t += dt; const u = Math.min(1, s.t / s.dur);
-    if (s.k === 'cro') { const lat = 6.8 * (1 - u) + .8, fw = 2.5 + 5 * u; A.vx = s.lx * lat + s.fx * fw; A.vy = s.ly * lat + s.fy * fw; A.fcx = s.fx * .7 + s.lx * .3; A.fcy = s.fy * .7 + s.ly * .3; const nn = hyp(A.fcx, A.fcy); A.fcx /= nn; A.fcy /= nn; }
-    else { const ang = u * Math.PI * 2 * s.spin, c = Math.cos(ang), sn = Math.sin(ang); A.fcx = s.fx * c - s.fy * sn; A.fcy = s.fx * sn + s.fy * c; const lat = 3.4 * Math.sin(u * Math.PI) + .6, fw = 1.8 + 2.2 * u; A.vx = s.lx * lat + s.fx * fw; A.vy = s.ly * lat + s.fy * fw; }
-    if (s.t >= s.dur) { A.skill = null; A.fcx = s.fx; A.fcy = s.fy; const v = this.jog(A) * 1.15; A.vx = s.fx * v; A.vy = s.fy * v; }
+    const s = A.skill; s.t += dt; const u = Math.min(1, s.t / s.dur), m = skillMove(s, u);
+    A.vx = m[0]; A.vy = m[1]; A.fcx = m[2]; A.fcy = m[3];
+    if (s.t >= s.dur) { A.skill = null; A.fcx = s.ex; A.fcy = s.ey; const v = this.jog(A) * 1.15; A.vx = s.ex * v; A.vy = s.ey * v; }
   };
   // CPU manager for one team: writes the same inputs a human would (stick + button presses)
   E.cpuStep = function (t, dt) {
@@ -204,7 +205,7 @@ const LIVE = (function () {
         M.cpuT = lv.react * (.7 + rand() * .6);
         const angOk = Math.abs(A.x - CX) < 6 + dist * .7;
         if (dist < 27 && angOk && rand() < (dist < 14 ? .8 : .38) * lv.shoot) { I.q.push({ k: 'shoot', x: (rand() - .5) * 1.7, y: ad, p: .58 + rand() * .32 }); return; }
-        if (nd < 2.6 && (A.scd || 0) <= 0 && rand() < .2 * (lv.skill || 1)) { I.q.push({ k: rand() < .5 ? 'cro' : 'rou', x: 0, y: 0 }); return; }
+        if (nd < 2.8 && (A.scd || 0) <= 0 && rand() < clamp((A.pac + A.pas - 140) / 110, .12, .42) * (lv.skill || 1)) { I.q.push({ k: SKILL_KEYS[(rand() * SKILL_KEYS.length) | 0], x: 0, y: 0 }); return; }
         if (nd < 3.2 && rand() < .62) { I.q.push({ k: rand() < .2 ? 'thr' : 'pass', x: (CX - A.x) * .03, y: ad * .6 }); return; }
         if (rand() < .12) { I.q.push({ k: rand() < .35 ? 'thr' : 'pass', x: (CX - A.x) * .02, y: ad }); return; }
       }
@@ -228,14 +229,15 @@ const LIVE = (function () {
     if (!M.half && M.clock >= 45) { M.half = true; M.clock = 45; M.state = 'ht'; M.pause = 2.5; M.say('Half time ' + M.score[0] + '–' + M.score[1], 2.5); M.after = () => { M.kickoff(1); M.say('Second half', 1); }; return; }
     if (M.clock >= 90) { M.clock = 90; M.state = 'ft'; M.say('Full time ' + M.score[0] + '–' + M.score[1], 4); return; }
     b.npT -= dt; M.lock[0] -= dt; M.lock[1] -= dt;
-    for (const p of M.all) { p.cd -= dt; p.stun -= dt; if (p.scd > 0) p.scd -= dt; if (p.skill && M.ball.owner !== p) p.skill = null; }
+    for (const p of M.all) { p.cd -= dt; p.stun -= dt; if (p.scd > 0) p.scd -= dt; if (p.skill && M.ball.owner !== p) p.skill = null; if (p.act && (p.act.t += dt) >= p.act.dur) p.act = null; }
     M.pickActive(0); M.pickActive(1);
     if (M.cpuTeam === 0 || M.cpuTeam === 1) M.cpuStep(M.cpuTeam, dt);
     for (const t of [0, 1]) {
       const A = M.active[t], I = M.inp[t]; if (!A) continue;
       const mag = Math.min(1, hyp(I.wx, I.wy)); const q = I.q.splice(0);
       if (mag > .15 || q.length) M.idle[t] = 0; else M.idle[t] += dt;
-      if (A.stun > 0) M.accel(A, 0, 0, dt);
+      if (A.act && !A.skill && b.owner !== A) M.actStep(A, dt);
+      else if (A.stun > 0) M.accel(A, 0, 0, dt);
       else if (A.skill) M.skillStep(A, dt);
       else if (b.recv === A && !b.owner) M.recvMove(A, dt);
       else if (mag > .15) { const sp = M.jog(A) * (I.sprint ? 1.32 : 1) * (b.owner === A ? .9 : 1) * (.45 + .55 * mag); M.accel(A, I.wx / mag * sp, I.wy / mag * sp, dt); }
@@ -247,7 +249,7 @@ const LIVE = (function () {
           if (b.owner !== A) break;
           if (e.k === 'pass') M.pass(A, e.x, e.y, false, hyp(e.x, e.y) > .15 ? .25 : -.1);
           else if (e.k === 'thr') M.pass(A, e.x, e.y, true, hyp(e.x, e.y) > .15 ? .2 : -.1);
-          else if ((e.k === 'cro' || e.k === 'rou') && !A.skill && !A.gk && (A.scd || 0) <= 0) M.startSkill(A, e.k, I);
+          else if (SKILLS[e.k] && !A.skill && !A.gk && (A.scd || 0) <= 0) M.startSkill(A, e.k, I);
           else if (e.k === 'shoot') { let lat = e.x; if (Math.abs(e.x) < .2 && Math.abs(e.y) < .2) lat = A.x < CX ? .55 : -.55; M.shoot(A, clamp(e.p, 0, 1.05), lat); I.charging = false; I.power = 0; }
         }
         if (I.charging && b.owner === A) I.power = Math.min(1.05, I.power + dt / .85);
@@ -266,7 +268,7 @@ const LIVE = (function () {
     const ownT = b.owner ? b.owner.team : -1;
     M.teamAI(ownT, dt);
     for (const p of M.all) {
-      const t = p.team; if (p === M.active[t]) continue; if (p.stun > 0) { M.accel(p, 0, 0, dt); continue; }
+      const t = p.team; if (p === M.active[t]) continue; if (p.act && b.owner !== p) { M.actStep(p, dt); continue; } if (p.stun > 0) { M.accel(p, 0, 0, dt); continue; }
       if (p.gk) { if (b.owner === p) { p.hold -= dt; M.accel(p, 0, 0, dt); if (p.hold <= 0) M.pass(p, rand() - .5, M.ad(t), false, -.2); } else M.gkAI(p, dt); continue; }
       if (b.recv === p) { M.recvMove(p, dt); continue; }
       if (p.run) { M.move(p, p.run.x, p.run.y, M.jog(p) * 1.25, dt); if (hyp(p.run.x - p.x, p.run.y - p.y) < 1) p.run = null; continue; }
@@ -274,7 +276,7 @@ const LIVE = (function () {
       if (p === pl.press1 && ownT !== t) {
         const A = M.active[t];
         const chase = M.inp[t].press || pl.cpress || (!b.owner && (!A || hyp(b.x - p.x, b.y - p.y) < hyp(b.x - A.x, b.y - A.y) - 3));
-        if (chase) { M.move(p, b.x + b.vx * .3, b.y + b.vy * .3, M.jog(p) * (pl.cpress ? 1.3 : 1.15), dt, .4); if (b.owner && b.owner.team !== t && !b.owner.skill && p.cd <= 0 && hyp(b.owner.x - p.x, b.owner.y - p.y) < 1.2) { p.cd = 1; if (rand() < clamp(.3 + (p.def - b.owner.pac) / 300, .08, .55)) M.gain(p); } continue; }
+        if (chase) { M.move(p, b.x + b.vx * .3, b.y + b.vy * .3, M.jog(p) * (pl.cpress ? 1.3 : 1.15), dt, .4); if (b.owner && b.owner.team !== t && p.cd <= 0 && hyp(b.owner.x - p.x, b.owner.y - p.y) < (pl.cpress ? 2.4 : 1.6)) { const o = b.owner, d = hyp(o.x - p.x, o.y - p.y) || .01, sl = d > 1.1 || rand() < .35; p.cd = 1.1; M.act(p, sl ? 'slide' : 'poke', (o.x - p.x) / d, (o.y - p.y) / d, sl ? 8 : 3); if (o.skill) p.stun = .7; else if (rand() < clamp(.3 + (p.def - o.pac) / 300 + (sl ? .04 : 0), .08, .55)) { M.gain(p); if (sl) M.say('Two-footed slide!', .7); } else p.stun = sl ? .7 : .4; } continue; }
         const og = t === 0 ? 0 : L; M.move(p, b.x + (CX - b.x) * .25, b.y + (og - b.y) * Math.min(.3, 6 / (Math.abs(og - b.y) + 1)), M.jog(p), dt); continue;
       }
       if (!p.tg || (p.tT -= dt) <= 0) { p.tg = M.aiTarget(p); p.tT = .09; } M.move(p, p.tg[0], p.tg[1], M.jog(p) * p.tg[2], dt, p.tg[3]);
@@ -284,9 +286,10 @@ const LIVE = (function () {
     const A_ = M.all; for (let i = 0; i < A_.length; i++) for (let j = i + 1; j < A_.length; j++) { const a = A_[i], c = A_[j], dx = c.x - a.x, dy = c.y - a.y, d = hyp(dx, dy); if (d < 1.05 && d > .001) { const pu = (1.05 - d) / 2, nx = dx / d, ny = dy / d; if (b.owner !== a) { a.x -= nx * pu; a.y -= ny * pu; } if (b.owner !== c) { c.x += nx * pu; c.y += ny * pu; } } }
     M.ballStep(dt);
   };
+  E.actStep = function (p, dt) { const k = Math.exp(-dt * (p.act.k === 'slide' ? 2.6 : 6)); p.vx *= k; p.vy *= k; };
   E.ballStep = function (dt) {
     const M = this, b = M.ball;
-    if (b.owner) { const p = b.owner; b.x = clamp(p.x + p.fcx * .72, .1, W - .1); b.y = clamp(p.y + p.fcy * .72, .1, L - .1); b.z = 0; b.vx = p.vx; b.vy = p.vy; return; }
+    if (b.owner) { const p = b.owner, fl = p.skill && skillBall(p.skill, Math.min(1, p.skill.t / p.skill.dur)), off = fl ? fl[0] : .72, fx = fl ? p.skill.fx : p.fcx, fy = fl ? p.skill.fy : p.fcy; b.x = clamp(p.x + fx * off, .1, W - .1); b.y = clamp(p.y + fy * off, .1, L - .1); b.z = fl ? fl[1] : 0; b.vx = p.vx; b.vy = p.vy; return; }
     b.x += b.vx * dt; b.y += b.vy * dt;
     if (b.z > 0 || b.vz > 0) { b.z += b.vz * dt; b.vz -= 9.8 * dt; if (b.z <= 0) { b.z = 0; b.vz = -b.vz * .42; if (b.vz < 1.2) b.vz = 0; } }
     const c = b.z > .15 ? .12 : (b.shot ? .32 : .6), k = Math.exp(-c * dt); b.vx *= k; b.vy *= k; const sp = hyp(b.vx, b.vy); if (sp < .15) b.vx = b.vy = 0; if (b.shot && sp < 7) b.shot = false;
@@ -311,11 +314,13 @@ const LIVE = (function () {
     M.events.push({ t, name: sc ? sc.d.short : 'Own goal', min }); b.vx *= .2; b.vy *= .2;
     M.state = 'goal'; M.pause = 2.6; M.say('GOAL! ' + (sc ? sc.d.short : 'Own goal') + ' ' + min + "'", 2.6); M.after = () => M.kickoff(1 - t);
   };
+  // [idx, code, progress 0-100] for everyone mid-skill or mid-tackle, so every phone can animate it
+  E.acts = function () { const out = []; for (const p of this.all) { const a = p.skill || p.act; if (a) out.push(p.idx, ACT_CODE[a.k], Math.min(100, Math.round(a.t / a.dur * 100))); } return out; };
   // compact snapshot for the network
   E.snap = function () {
     const M = this, b = M.ball, P = [];
     for (const p of M.all) P.push(Math.round(p.x * 100) / 100, Math.round(p.y * 100) / 100, Math.round(p.fcx * 100) / 100, Math.round(p.fcy * 100) / 100);
-    return { c: Math.round(M.clock * 100) / 100, s: M.score, p: P, b: [Math.round(b.x * 100) / 100, Math.round(b.y * 100) / 100, Math.round(b.z * 100) / 100], o: b.owner ? b.owner.idx : -1, r: b.recv ? b.recv.idx : -1, a: [M.active[0] ? M.active[0].idx : -1, M.active[1] ? M.active[1].idx : -1], w: [M.inp[0].charging ? M.inp[0].power : 0, M.inp[1].charging ? M.inp[1].power : 0], bn: M.banner, bi: M.bannerId, st: M.state, ev: M.events };
+    return { c: Math.round(M.clock * 100) / 100, s: M.score, p: P, b: [Math.round(b.x * 100) / 100, Math.round(b.y * 100) / 100, Math.round(b.z * 100) / 100], o: b.owner ? b.owner.idx : -1, r: b.recv ? b.recv.idx : -1, a: [M.active[0] ? M.active[0].idx : -1, M.active[1] ? M.active[1].idx : -1], w: [M.inp[0].charging ? M.inp[0].power : 0, M.inp[1].charging ? M.inp[1].power : 0], bn: M.banner, bi: M.bannerId, st: M.state, ev: M.events, k: M.acts() };
   };
 
   /* ======================= UI ======================= */
@@ -396,7 +401,7 @@ const LIVE = (function () {
     const ab0 = t => (t.name || 'XI').replace(/[^A-Za-z0-9]/g, '').slice(0, 3).toUpperCase(); const ab = t => ab0(teams[0]) === ab0(teams[1]) ? 'P' + (teams.indexOf(t) + 1) : ab0(t);
     root.innerHTML = `<canvas class="f"></canvas><div class="top"><div class="bug">${b3 ? `<span class="kb" style="background:${kits[0].a}"></span>` : ''}<span class="tm" style="background:${kits[0].a};color:${txt(kits[0].a)}">${esc(ab(teams[0]))}</span><span class="sc">0 – 0</span><span class="tm" style="background:${kits[1].a};color:${txt(kits[1].a)}">${esc(ab(teams[1]))}</span>${b3 ? `<span class="kb" style="background:${kits[1].a}"></span>` : ''}<span class="ck">0'</span></div><canvas class="rad" width="120" height="80"></canvas>${b3 ? '<button class="cam" aria-label="Camera zoom">CAM</button>' : ''}<button class="x" aria-label="Pause or leave">${b3 ? "II" : "✕"}</button></div>
       <div class="you">${local ? '' : `<span class="net"><i></i><span class="nt">Connected</span></span> `}${local ? `${esc(teams[role].name || 'Your XI')} · attacking ${b3 ? 'right →' : 'up ↑'}` : `You are ${esc(teams[role].mgr || 'Player ' + (role + 1))} · attacking ${b3 ? 'right →' : 'up ↑'}`}</div>
-      <div class="pname"><b></b><div class="pw"><i></i></div></div><div class="hint">Hold PASS = through ball · Swipe SHOOT → La Croqueta · ↑ Marseille turn</div><div class="rot">Turn your phone sideways<br>for the broadcast view</div>
+      <div class="pname"><b></b><div class="pw"><i></i></div></div><div class="hint">Hold PASS = through ball · Swipe SHOOT: → Croqueta · ↑ Marseille · ← Stepover · ↓ Rainbow flick · TACKLE from range = two-footed slide</div><div class="rot">Turn your phone sideways<br>for the broadcast view</div>
       <div class="zone"></div><div class="stick"><div class="knob"></div></div>
       <div class="pad"><button class="pb r">Sprint</button><button class="pb t">Through</button><button class="pb p">Pass</button><button class="pb s">Shoot</button></div>
       <div class="ban"></div><div class="ov" hidden><div class="card"></div></div>`;
@@ -412,7 +417,7 @@ const LIVE = (function () {
 
     function txt(hex) { const c = parseInt(hex.slice(1), 16), r = c >> 16, g = c >> 8 & 255, b = c & 255; return (r * 299 + g * 587 + b * 114) / 1000 > 150 ? '#0a1410' : '#fff'; }
     function resize() { if (view3) view3.resize(); const r = root.getBoundingClientRect(), dpr = Math.min(2, window.devicePixelRatio || 1); cv.width = r.width * dpr; cv.height = r.height * dpr; dims = { w: r.width, h: r.height, dpr, land: r.width > r.height, s: r.width > r.height ? Math.max(r.height / 40, r.width / 70) : r.width / 40 }; if (dims.land) { rc.width = 120; rc.height = 80; } else { rc.width = 64; rc.height = 96; } }
-    let view3 = null; if (b3) { try { view3 = BROADCAST.create(root, { kits, role, names: null, gks, nums: teams.flatMap(t => shirtNums(t.xi)) }); } catch (e) { view3 = null; root.classList.remove('b3'); } }
+    let view3 = null; if (b3) { try { view3 = BROADCAST.create(root, { kits, role, names: null, gks, nums: teams.flatMap(t => shirtNums(t.xi)), pids: teams.flatMap(t => t.xi) }); } catch (e) { view3 = null; root.classList.remove('b3'); } }
     window.addEventListener('resize', resize); resize();
     // world (x,y) -> view coords where my team attacks up/right
     const vx = x => role === 0 ? x : W - x, vy = y => role === 0 ? y : L - y;
@@ -428,12 +433,14 @@ const LIVE = (function () {
     const myBall = () => { const sn = cur; return sn && sn.o >= 0 && Math.floor(sn.o / 11) === role; };
     function push(k, extra) { const [x, y] = worldDir(); const ev = Object.assign({ k, x, y }, extra || {}); inp.q.push(ev); if (!host) sendInput(true); }
     function btn(sel, down, up) { const el = $(sel); el.addEventListener('pointerdown', e => { e.preventDefault(); el.setPointerCapture(e.pointerId); el.classList.add('dn'); down(); }); const u = () => { el.classList.remove('dn'); up && up(); }; el.addEventListener('pointerup', u); el.addEventListener('pointercancel', u); el.addEventListener('contextmenu', e => e.preventDefault()); }
-    // SHOOT: hold = power shot. Swipe left→right over it = La Croqueta, swipe up = Marseille turn (only with the ball).
+    // SHOOT: hold = power shot. Swipe over it with the ball: right = La Croqueta, up = Marseille turn, left = stepover, down = rainbow flick.
     { const el = $('.pb.s'); let x0 = 0, y0 = 0, swiped = false, pid = null;
       el.addEventListener('pointerdown', e => { e.preventDefault(); el.setPointerCapture(e.pointerId); pid = e.pointerId; el.classList.add('dn'); x0 = e.clientX; y0 = e.clientY; swiped = false; if (myBall()) { inp.charging = true; inp.chargeT = performance.now(); if (!host) sendInput(true); } else push('tackle'); });
       el.addEventListener('pointermove', e => { if (e.pointerId !== pid || swiped || !inp.charging) return; const dx = e.clientX - x0, dy = e.clientY - y0;
         if (dx > 30 && dx > Math.abs(dy) * 1.2) { swiped = true; inp.charging = false; push('cro'); el.classList.add('sw'); }
-        else if (dy < -30 && -dy > Math.abs(dx) * 1.2) { swiped = true; inp.charging = false; push('rou'); el.classList.add('sw'); } });
+        else if (dy < -30 && -dy > Math.abs(dx) * 1.2) { swiped = true; inp.charging = false; push('rou'); el.classList.add('sw'); }
+        else if (dx < -30 && -dx > Math.abs(dy) * 1.2) { swiped = true; inp.charging = false; push('step'); el.classList.add('sw'); }
+        else if (dy > 30 && dy > Math.abs(dx) * 1.2) { swiped = true; inp.charging = false; push('flick'); el.classList.add('sw'); } });
       const up = e => { if (e.pointerId !== pid) return; pid = null; el.classList.remove('dn', 'sw'); if (inp.charging && !swiped) { inp.charging = false; const p = Math.min(1.05, (performance.now() - inp.chargeT) / 850); push('shoot', { p }); } inp.charging = false; };
       el.addEventListener('pointerup', up); el.addEventListener('pointercancel', up); el.addEventListener('contextmenu', e => e.preventDefault()); }
     let passT = 0, passHeld = false;

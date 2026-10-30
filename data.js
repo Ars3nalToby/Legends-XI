@@ -42,7 +42,11 @@ const RAW=[
 ['Karim Benzema','ST',91,'FRA','10 20',0,80,90,88,40],['Harry Kane','ST',90,'ENG','10 20',0,70,93,88,45],['Kylian Mbappé','ST',93,'FRA','10 20',0,98,92,84,36],
 ['Erling Haaland','ST',92,'NOR','20',0,92,95,70,45],
 ['Oliver Kahn','GK',92,'GER','90 00',0,88,93,90,78],['Pepe','CB',87,'POR','00 10 20',0,78,50,66,89],['Jaap Stam','CB',89,'NED','90 00',0,80,45,66,92],
-['Kyle Walker','RB',86,'ENG','10 20',0,94,58,76,84],['Alphonso Davies','LB',85,'CAN','20',0,96,60,76,78],['Frank Rijkaard','CDM',89,'NED','90',0,76,68,86,89]
+['Kyle Walker','RB',86,'ENG','10 20',0,94,58,76,84],['Alphonso Davies','LB',85,'CAN','20',0,96,60,76,78],['Frank Rijkaard','CDM',89,'NED','90',0,76,68,86,89],
+['Jurriën Timber','RB',85,'NED','20',1,84,50,78,86],['Riccardo Calafiori','LB',83,'ITA','20',1,80,58,78,83],['Thomas Partey','CDM',85,'GHA','10 20',1,72,72,82,86],
+['Kai Havertz','CF',85,'GER','10 20',1,78,84,82,55],['Leandro Trossard','LW',83,'BEL','10 20',1,82,83,82,45],['Gabriel Jesus','ST',83,'BRA','10 20',1,86,82,80,50],
+['Martín Zubimendi','CDM',86,'ESP','20',1,66,64,88,85],['Viktor Gyökeres','ST',86,'SWE','20',1,88,88,72,45],['Oleksandr Zinchenko','LB',82,'UKR','10 20',1,74,65,86,76],
+['Eberechi Eze','CAM',85,'ENG','20',1,84,84,86,45]
 ];
 const PL=RAW.map((r,i)=>({id:i,name:r[0],pos:r[1],ovr:r[2],nat:r[3],dec:r[4].split(' '),ars:!!r[5],s:[r[6],r[7],r[8],r[9]]}));
 PL.forEach(p=>{const m=p.name.match(/\b((van der|van|de) \S+)$/i);let s=m?m[1]:p.name.split(' ').slice(-1)[0];
@@ -52,13 +56,44 @@ const byName=n=>{const p=PL.find(x=>x.name===n);return p?p.id:null};
 const eraLabel=p=>{const f=d=>"'"+d+'s';return p.dec.length>1?f(p.dec[0])+'–'+f(p.dec[p.dec.length-1]):f(p.dec[0])};
 const statLbl=p=>p.pos==='GK'?['DIV','REF','HAN','KIC']:['PAC','SHO','PAS','DEF'];
 
-const FORMS={
+const FORM_BASE={
  '4-3-3':[['GK',.5,.02],['LB',.14,.24],['CB',.37,.18],['CB',.63,.18],['RB',.86,.24],['CM',.27,.47],['CDM',.5,.38],['CM',.73,.47],['LW',.16,.72],['ST',.5,.8],['RW',.84,.72]],
  '4-4-2':[['GK',.5,.02],['LB',.14,.24],['CB',.37,.18],['CB',.63,.18],['RB',.86,.24],['LM',.14,.52],['CM',.38,.44],['CM',.62,.44],['RM',.86,.52],['ST',.38,.78],['ST',.62,.78]],
  '4-2-3-1':[['GK',.5,.02],['LB',.14,.24],['CB',.37,.18],['CB',.63,.18],['RB',.86,.24],['CDM',.37,.38],['CDM',.63,.38],['LW',.16,.62],['CAM',.5,.6],['RW',.84,.62],['ST',.5,.8]],
  '3-4-1-2':[['GK',.5,.02],['CB',.26,.2],['CB',.5,.17],['CB',.74,.2],['LM',.1,.5],['CDM',.36,.4],['CDM',.64,.4],['RM',.9,.5],['CAM',.5,.62],['ST',.38,.8],['ST',.62,.8]],
- '3-5-2':[['GK',.5,.02],['CB',.26,.2],['CB',.5,.17],['CB',.74,.2],['LM',.1,.5],['CM',.32,.48],['CDM',.5,.37],['CM',.68,.48],['RM',.9,.5],['ST',.38,.78],['ST',.62,.78]]
+ '3-5-2':[['GK',.5,.02],['CB',.26,.2],['CB',.5,.17],['CB',.74,.2],['LM',.1,.5],['CM',.32,.48],['CDM',.5,.37],['CM',.68,.48],['RM',.9,.5],['ST',.38,.78],['ST',.62,.78]],
+ '4-1-4-1':[['GK',.5,.02],['LB',.14,.24],['CB',.37,.18],['CB',.63,.18],['RB',.86,.24],['CDM',.5,.36],['LM',.12,.54],['CM',.37,.5],['CM',.63,.5],['RM',.88,.54],['ST',.5,.8]],
+ '4-4-1-1':[['GK',.5,.02],['LB',.14,.24],['CB',.37,.18],['CB',.63,.18],['RB',.86,.24],['LM',.14,.48],['CM',.38,.42],['CM',.62,.42],['RM',.86,.48],['CAM',.5,.64],['ST',.5,.8]],
+ '4-1-2-1-2':[['GK',.5,.02],['LB',.14,.24],['CB',.37,.18],['CB',.63,.18],['RB',.86,.24],['CDM',.5,.36],['CM',.3,.48],['CM',.7,.48],['CAM',.5,.61],['ST',.38,.8],['ST',.62,.8]],
+ '4-3-2-1':[['GK',.5,.02],['LB',.14,.24],['CB',.37,.18],['CB',.63,.18],['RB',.86,.24],['CM',.27,.45],['CDM',.5,.38],['CM',.73,.45],['CAM',.33,.64],['CAM',.67,.64],['ST',.5,.82]],
+ '3-4-3':[['GK',.5,.02],['CB',.26,.2],['CB',.5,.17],['CB',.74,.2],['LM',.1,.48],['CM',.37,.43],['CM',.63,.43],['RM',.9,.48],['LW',.18,.72],['ST',.5,.8],['RW',.82,.72]],
+ '5-3-2':[['GK',.5,.02],['LB',.08,.3],['CB',.3,.19],['CB',.5,.16],['CB',.7,.19],['RB',.92,.3],['CM',.28,.46],['CDM',.5,.4],['CM',.72,.46],['ST',.38,.78],['ST',.62,.78]],
+ '5-4-1':[['GK',.5,.02],['LB',.08,.3],['CB',.3,.19],['CB',.5,.16],['CB',.7,.19],['RB',.92,.3],['LM',.14,.52],['CM',.38,.45],['CM',.62,.45],['RM',.86,.52],['ST',.5,.8]]
 };
+/* Custom shapes: drag any outfield player anywhere on the pitch. A custom shape is stored as a formation key
+   "~<base>:" + 10 x 4 digits (xxyy, hundredths) for slots 1-10, so it travels through saves, team codes and both match engines
+   unchanged. Each slot's role (CB, CM, RW...) is re-read from where it now stands. */
+function roleAt(x,y){const w=x<.5?'L':'R',wide=v=>x<v||x>1-v;
+  if(y<.3)return wide(.25)?w+'B':'CB';
+  if(y<.42)return wide(.2)?(y<.36?w+'B':w+'M'):'CDM';
+  if(y<.58)return wide(.22)?w+'M':'CM';
+  if(y<.7)return wide(.25)?w+'W':'CAM';
+  return wide(.25)?w+'W':'ST'}
+const _fc={};
+function parseForm(k){if(typeof k!=='string'||k[0]!=='~')return null;if(_fc[k])return _fc[k];
+  const m=k.match(/^~([0-9-]{5,9}):(\d{40})$/);if(!m||!FORM_BASE[m[1]])return null;const d=m[2],out=[['GK',.5,.02]];
+  for(let i=0;i<10;i++){const x=+d.substr(i*4,2)/100,y=+d.substr(i*4+2,2)/100;if(x<.04||x>.96||y<.08||y>.88)return null;out.push([roleAt(x,y),x,y])}
+  return _fc[k]=out}
+const FORMS=new Proxy(FORM_BASE,{get:(t,k)=>k in t?t[k]:parseForm(k)||undefined,has:(t,k)=>k in t||!!parseForm(k)});
+const isCustom=f=>typeof f==='string'&&f[0]==='~';
+const formBase=f=>isCustom(f)?f.slice(1,f.indexOf(':')):f;
+const p2=v=>String(Math.round(Math.min(.96,Math.max(.04,v))*100)).padStart(2,'0');
+function formMove(f,i,x,y){const sl=FORMS[f];if(!sl||i<1||i>10)return f;x=Math.min(.94,Math.max(.06,x));y=Math.min(.86,Math.max(.1,y));
+  return '~'+formBase(f)+':'+sl.slice(1).map((s,j)=>j+1===i?p2(x)+p2(y):p2(s[1])+p2(s[2])).join('')}
+/* "4-2-3-1" style label: base shapes keep their name; custom shapes are grouped into lines by depth */
+function formLabel(f){if(!isCustom(f))return f;const ys=FORMS[f].slice(1).map(s=>s[2]).sort((a,b)=>a-b),g=[1];
+  for(let i=1;i<ys.length;i++){if(ys[i]-ys[i-1]>.075)g.push(1);else g[g.length-1]++}return g.join('-')}
+
 const COMPAT={GK:['GK'],CB:['CB'],LB:['LB'],RB:['RB'],CDM:['CDM','CM'],CM:['CM','CDM','CAM'],CAM:['CAM','CF','CM'],LW:['LW'],RW:['RW'],LM:['LW','LM','LB'],RM:['RW','RM','RB'],ST:['ST','CF']};
 const LINE={GK:'G',CB:'D',LB:'D',RB:'D',CDM:'M',CM:'M',CAM:'M',CF:'A',LW:'A',RW:'A',LM:'M',RM:'M',ST:'A'};
 function fit(p,slotPos){if(COMPAT[slotPos].includes(p.pos))return 'nat';const a=LINE[p.pos],b=LINE[slotPos];if(a==='G'||b==='G')return 'off';if(a===b||(b==='M'&&a==='A'&&(slotPos==='LM'||slotPos==='RM')))return 'line';return 'off'}
@@ -69,7 +104,7 @@ const PRESETS={
  inv:{form:'4-4-2',names:['Jens Lehmann','Ashley Cole','Sol Campbell','Kolo Touré','Lauren','Robert Pires','Patrick Vieira','Gilberto Silva','Freddie Ljungberg','Thierry Henry','Dennis Bergkamp']},
  ars:{form:'4-2-3-1',names:['David Seaman','Ashley Cole','Tony Adams','Sol Campbell','Lee Dixon','Patrick Vieira','Declan Rice','Robert Pires','Dennis Bergkamp','Bukayo Saka','Thierry Henry']},
  dark:{form:'3-4-1-2',names:['Oliver Kahn','Jaap Stam','Sergio Ramos','Pepe','Alphonso Davies','Patrick Vieira','Frank Rijkaard','Kyle Walker','Luis Suárez','Didier Drogba','Zlatan Ibrahimović']},
- mod:{form:'4-3-3',names:['David Raya','Ashley Cole','William Saliba','Gabriel','Ben White','Santi Cazorla','Declan Rice','Martin Ødegaard','Gabriel Martinelli','Thierry Henry','Bukayo Saka']}
+ mod:{form:'4-3-3',names:['David Raya','Riccardo Calafiori','Gabriel','William Saliba','Ben White','Declan Rice','Thomas Partey','Martin Ødegaard','Gabriel Martinelli','Kai Havertz','Bukayo Saka']}
 };
 
 function teamStats(form,xi){const sl=FORMS[form];let sum=0,n=0,chem=0,gun=0;
@@ -82,6 +117,38 @@ function autofill(form,xi,pool){const sl=FORMS[form];const out=xi.slice();const 
   return out}
 
 /* Real shirt numbers where we know them (Dark Arts Warriors squad). Anyone else gets the lowest free number. */
-const SHIRTS={'Oliver Kahn':1,'Pepe':3,'Sergio Ramos':4,'Jaap Stam':6,'Kyle Walker':2,'Alphonso Davies':19,'Patrick Vieira':14,'Frank Rijkaard':8,'Luis Suárez':9,'Didier Drogba':11,'Zlatan Ibrahimović':10};
+const SHIRTS={'Oliver Kahn':1,'Pepe':3,'Sergio Ramos':4,'Jaap Stam':6,'Kyle Walker':2,'Alphonso Davies':19,'Patrick Vieira':14,'Frank Rijkaard':8,'Luis Suárez':9,'Didier Drogba':11,'Zlatan Ibrahimović':10,
+ 'David Raya':22,'William Saliba':2,'Gabriel':6,'Ben White':4,'Riccardo Calafiori':33,'Declan Rice':41,'Thomas Partey':5,'Martin Ødegaard':8,'Bukayo Saka':7,'Kai Havertz':29,'Gabriel Martinelli':11,'Jurriën Timber':12,'Martín Zubimendi':36,'Viktor Gyökeres':14,'Eberechi Eze':10};
 function shirtNums(xi){const used=new Set(),out=xi.map(id=>{const n=id!=null&&PL[id]?SHIRTS[PL[id].name]:undefined;if(n&&!used.has(n)){used.add(n);return n}return 0});
   let c=1;return out.map((n,i)=>{if(n)return n;if(PL[xi[i]]&&PL[xi[i]].pos==='GK'&&!used.has(1)){used.add(1);return 1}while(used.has(c))c++;used.add(c);return c})}
+
+/* ---------- Skill moves and tackle animations, shared by the live engine, the 22-player sim and both 3D renderers ----------
+   s = {k, fx, fy (attack dir), lx, ly (unit vector away from the nearest defender), ex, ey (exit dir), spin}
+   skillMove(s, u) -> [vx, vy, faceX, faceY] for progress u in 0..1. skillBall(s, u) -> [forward offset, height] while the ball is lifted. */
+const SKILLS={
+  cro:{name:'La Croqueta',dur:.34,beat:0},
+  rou:{name:'Marseille turn',dur:.62,beat:-.05},
+  step:{name:'Stepover',dur:.5,beat:.03},
+  ela:{name:'Elastico',dur:.4,beat:.05},
+  flick:{name:'Rainbow flick',dur:.7,beat:.07},
+  cru:{name:'Cruyff turn',dur:.52,beat:0}
+};
+const SKILL_KEYS=Object.keys(SKILLS);
+/* action codes carried in snapshots / recorded frames: 1 two-footed slide, 2 standing tackle, 3+ skills in SKILL_KEYS order */
+const ACT_CODE={slide:1,poke:2};SKILL_KEYS.forEach((k,i)=>ACT_CODE[k]=3+i);
+function skillSetup(k,fx,fy,ox,oy,px,py){ // ox,oy: nearest defender position relative to player
+  let lx=-fy,ly=fx;if(ox*lx+oy*ly>0){lx=-lx;ly=-ly}
+  const s={k,t:0,dur:SKILLS[k].dur,fx,fy,lx,ly,ex:fx,ey:fy,spin:(lx*fy-ly*fx)>0?-1:1};
+  if(k==='cru'){let ex=lx*.85+fx*.3,ey=ly*.85+fy*.3;const n=Math.hypot(ex,ey)||1;s.ex=ex/n;s.ey=ey/n}
+  return s}
+function skillMove(s,u){const f=(lat,fw)=>[s.lx*lat+s.fx*fw,s.ly*lat+s.fy*fw];let v,fc=[s.fx,s.fy];
+  switch(s.k){
+    case 'cro':v=f(6.8*(1-u)+.8,2.5+5*u);fc=[s.fx*.7+s.lx*.3,s.fy*.7+s.ly*.3];break;
+    case 'rou':{const a=u*Math.PI*2*s.spin,c=Math.cos(a),sn=Math.sin(a);fc=[s.fx*c-s.fy*sn,s.fx*sn+s.fy*c];v=f(3.4*Math.sin(u*Math.PI)+.6,1.8+2.2*u);break}
+    case 'step':v=u<.45?f(-1.6,1.2):f(5.6*(1-u)+.6,2+5*(u-.45));break;
+    case 'ela':v=u<.3?f(-3,1.5):f(7.5*(1-u)+.5,2+3*u);break;
+    case 'flick':v=f(.2,3+3.6*u);break;
+    case 'cru':if(u<.5){v=f(.4,1.6*(1-2*u));fc=[s.fx*(1-u)+s.ex*u,s.fy*(1-u)+s.ey*u]}else{const sp=2+6*(u-.5);v=[s.ex*sp,s.ey*sp];fc=[s.ex,s.ey]}break;
+    default:v=f(0,3)}
+  const n=Math.hypot(fc[0],fc[1])||1;return [v[0],v[1],fc[0]/n,fc[1]/n]}
+function skillBall(s,u){if(s.k!=='flick')return null;return [-.45+2.1*u,Math.sin(Math.min(1,u*1.1)*Math.PI)*1.9]}
